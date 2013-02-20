@@ -1,24 +1,31 @@
+'''Modulis, kuriame aprasytas metodas surenkantis komanda ir jos argumentus, priklausomai,
+nuo pateikto patterno COMMANDS zodyne.
+
+Naudojimas: collect_full_command(pozicija,stringas)
+pozicija -- komandos pradzia reiskianti metacharas "\\"
+
+Return: '''
 import string, sys, os
 
 try:
     if __IPYTHON__:
         if sys.platform=='win32':
-            os.chdir('d:/Luko/emacs/programavimas/Projektas/CTVparsingas/')       
+            os.chdir('d:/Luko/vtexparser/')       
         else:
-            sys.path.append('/home/lukas/programavimas/Projektai/CTV/')
+            sys.path.append('/home/lukas/vtexparser/')
 except:
     pass
 
 METACHARACTERS={'#','$','%','^','{','}','_','~','\\'}
-# whitespacai kurie yra ne newline 
+# whitespace'ai kurie yra ne newline 
 WHITESPACE={' ','\t'}
+# komanda sudarantys simboliai, * priskirima prie komandos pav 
 COMMAND_CHARS=list(string.ascii_letters)
 COMMAND_CHARS.append('*')
 ARGUMENT=list(string.ascii_letters+string.digits)
 
 # SARASAS NURODANTIS KIEK PAGRINDINIU IR OPCIONALIU ARGUMENTU TURI KOMANDA
 # NURODOMAS PATTERNAS 1--pagr argumentas 0--opcionalus 
-
 COMMANDS={'\\begin':(1,0),
           '\\end':(1,),
           '\\frac':(1,1),
@@ -38,7 +45,6 @@ COMMANDS={'\\begin':(1,0),
           '\\subsubparagraph':(0,1),
           '\\subsubsubparagraph':(0,1)}
 
-
 # ENVIROMENTAI SU OPCIONALIAIS ARGUMENTAIS
 # SKAICIUS ISREISKIA OPCIONALIU ARGUMENTU SKAICIU 
 ENVIROMENTS={'equation':1,
@@ -54,22 +60,17 @@ ENVIROMENTS={'equation':1,
 #     * math -- matematines komandos
 #     * covered -- komandos kuriu argumentai apgaubia komanda is abieju pusiu
 R_TYPE={'iverb':['\\verb'],
-       'nocomment':['\\index'],
+       'nocomment':['\\index',],
        'package':['\\usepackage'],
+       'syntax':['\\newcommand','\\def']
        'env':['\\begin','\\end'],
        'switch':['\\it','\\bf','\\em'],    # switchai neturi nei vieno argumento
-       'math':['\\frac','\\sin','\\leq']}
+       'math':['\\frac','\\sin','\\leq']
+       'msymbol':['\\alpha','\\beta'],
+       'tsymbol':['\textmu','\textbackslash']}
 
-# Papildom COMMANDS is R_TYPE
-for i in R_TYPE['switch']:
-    COMMANDS[i]=(0)
-
-BAISUS_PAKETAI={'fancyvrb','listings'}
-BAISIOS_KOMANDOS={'\\DefineShortVerb',     #\DefineShortVerb{ \|} -> |%labas%|
-                  '\\UndefineShortVerb'}
-BAISUS_ENVIROMENTAI={'Verbatim'}          # \begin{Verbatim}[commentchar=!]
-                     
-##### R_TYPE APVERTIMAS ###
+##### R_TYPE APVERTIMAS #####
+# kad galetume gauti komandos tipa
 TYPE={}
 LIST=[]
 for i in R_TYPE.keys():
@@ -79,8 +80,20 @@ for i,j in LIST:
 
 del LIST
 del R_TYPE
-############################
+##############################
 
+### Papildom COMMANDS is R_TYPE #####
+for i in R_TYPE['switch']:
+    COMMANDS[i]=None
+######################################
+    
+BAISUS_PAKETAI={'fancyvrb','listings'}
+BAISIOS_KOMANDOS={'\\DefineShortVerb',     #\DefineShortVerb{ \|} -> |%labas%|
+                  '\\UndefineShortVerb'}
+
+### Verbatimo enviromentai
+VERB_ENV={'Verbatim'}          # \begin{Verbatim}[commentchar=!]
+                     
 class ParseError(Exception):
     '''Motininis parsinimo Erroras'''
     def __init__(self,Msg,Poz):
@@ -91,7 +104,7 @@ class ParseError(Exception):
 
 class MatchError(ParseError):
     '''Erroras atsirandanti, kai 
-    ieskoma nesuporuoto skliausto.'''
+    ieskoma nesuporuoto skirtuko.'''
     def __init__(self,Msg,Poz):
         super().__init__(Msg,Poz)
 
@@ -122,10 +135,11 @@ def metachar(poz,String):
 def metachar_greedy(poz,String):
     '''Jei esamas charas nera metacharas
     ismeta parsingo errora'''
-    if metachar(poz,String):
-        return True
+    if metachar(poz,String): return True
     else: 
-        raise AlgError('This is not a metachar\n{}'.format(context(poz,String)),poz)
+        raise AlgError(
+            'This is not a metachar'\
+            '\n{}'.format(context(poz,String)),poz)
 
 def EOS(poz,String):
     '''Tikrinama ar esamas charas
@@ -290,8 +304,7 @@ def collect_full_command(poz,String):
     i+=ilg
 
     # susirenkam zvaigzdute
-    # zvaigzdute turi tuos pacius tarpus
-    # kaip ir argumentas
+    # atsiskiria nuo komandos kaip ir argumentas
     ilg=skip_till_argument(i,String)
     if String[i+ilg]=='*':
         komanda=komanda+'*'
@@ -324,46 +337,7 @@ def collect_full_command(poz,String):
                     args.append(None)
                     pass
                 
-
     return i-poz, komanda, args, String[poz:i], (poz,i)    
 
 
-####### PAGR TESTAVIMAS ######
-if __name__=='__main__':
-    String=\
-'''Labas vakaras\\begin{equation}
-      %
-      %
-      \\frac {\\alpha}  
-      {\\beta}  
-      \\frac \\alpha \\beta 
-      \\frac12
-      \\vfill{\\rule[3pt]
-      %%%%%%%%%
-           {2pt}  
-                      {4pt}}
-      \\begin*
-      %%%%%%%%%
-           {equation}
-\\rule[3pt]{2pt}{2pt}
-\\frac{\\frac{1}{\{2+\\mathbf{2}\}}}{\\gamma}
-\\rule {2pt}
-{3pt}
-
-nly by ${\\cal O}(10\\%)$ even fairly clos
-      \end{document}
-
-%------------------------------------------------------------------------------ '''
-    print()
-
-    i=0
-    lenght=len(String)-1
-    commands=[]
-    while (not EOS(i,String)):
-        if String[i]=='\\' and metachar(i,String):
-            commands.append(collect_full_command(i,String))
-            if EOS(i,String):
-                break
-        i+=1
-##############################  
 

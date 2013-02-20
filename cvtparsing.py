@@ -1,11 +1,7 @@
-'''Modulis kuriame aprasyta funkcija parsinanti teksta, verbatima
- ir komentarus
+'''Automatonas skaidantis teksta i triju rusiu eilutes:
+comment, verbatim ir other'''
 
-1.Gauta teksta suskaido i teksta, komentarus ir verbatima.
-2.Surenka po komentaro einancius whitespace.
-3.Nesusitvarko su uzkomentuotomis komandosmis
-  \LaTeX%
-  tekstas.'''
+
 
 
 import string
