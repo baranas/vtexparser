@@ -2,16 +2,29 @@
 komandos'''
 import string, os, sys
 
+# SIMBOLIAI VISADA RODO I OPCIJA
+# GAL TO NEPRIREIKS, TACIAU PALIEKU GALIMYBE 
+# PAKEISTI SINTAKSE IR KEICIANT PRIDETI OPCIJAS
+# JOS PAGAL NUTYLEJIMA YRA None
+
+#################### METACHARAI IR SPACE'AI
+
 # METACHARAI, TURINTYS SINTAKSINE PRASME
 METACHARACTERS={'#','$','%','^','{','}','_','~','\\'}
-# Whitespace'ai kurie yra ne newline 
+# METACHARO ESKEIPAS
+METACHAR_ESC={'\\':None}
+     
+# EILUTES Whitespace'ai  
 WHITESPACE={' ','\t'}
-# komanda sudarantys simboliai, * priskirima prie komandos pav 
+
+########## KOMANDOS 
+
+# METACHARAS REISKIANTIS KOMANDOS PAVADINIMO PRADZIA
+START_OF_CMD={'\\':None}
+    
+# Komanda sudarantys simboliai, * priskirima prie komandos pav 
 COMMAND_CHARS=list(string.ascii_letters)
 COMMAND_CHARS.append('*')
-# KAS BUS ARGUMENTU, JEI TAI NE KOMANDA IR NE APSKLIAUSTAS
-# REISKINYS
-ARGUMENT=list(string.ascii_letters+string.digits)
 
 # SARASAS NURODANTIS KIEK PAGRINDINIU IR OPCIONALIU ARGUMENTU TURI KOMANDA
 # NURODOMAS PATTERNAS 1--pagr argumentas 0--opcionalus 
@@ -36,6 +49,30 @@ COMMANDS={'\\begin':(1,0),
           '\\index':(1,),
           '\\commentinarg':(1,),
           '\\def':(1,1)}
+
+############### KOMANDU ARGUMENTAI
+    
+# SKIRTUKAI APGAUBIANTYS PAGRINDINI ARGUMENTA
+ARG_DELIMS={'{':'}'}
+
+# KAS BUS ARGUMENTU, JEI TAI NE KOMANDA IR NE APSKLIAUSTAS
+# REISKINYS
+ARGUMENT=set(string.ascii_letters+string.digits)
+# ARGUMENTO PRADZIOS SIMBOLIAI
+BEGIN_OF_ARG=ARGUMENT
+BEGIN_OF_ARG.update(set(START_OF_CMD.keys()))
+BEGIN_OF_ARG.update(set(ARG_DELIMS.keys()))
+# CHARAI KURIUOS SUTIKUS AISKU, KAD 
+
+
+############### KOMENTARAI
+
+# NUMATANT SINTAKSES KEITIMA
+# METAJUNGIGLIS: (ISJUNGIKLIS, (SAVYBES,))
+# w -- reiskia, kad po isjungimo bus suvalgomi whitespace
+COMMENT={'%':('\n',('w',))}
+
+
 
 # ENVIROMENTU PRADZIOS, GALI BUTI PERAPIBREZTOS
 # TODEL REIKIA NUMATYTI GALIMYBE PAPILDYTI SITA LISTA

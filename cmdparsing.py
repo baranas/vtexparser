@@ -50,11 +50,22 @@ def metachar(poz,String):
     '''Jei charas yra metacharu sarase, 
     tai patikrinam ar pries ji buves simbolis 
     nera \\'''
+    if not (String[poz] in texsyntax.METACHARACTERS):
+        return False
     if poz==0:
-          return True 
-    if String[poz] in texsyntax.METACHARACTERS:
-        return String[poz-1]!='\\'
-    else: return True
+          return True  
+    if String[poz-1] in texsyntax.METACHAR_ESC.keys():
+          # jei siam escape charui nenumatyta jokiu opciju
+          if not texsyntax.METACHAR_ESC[String[poz-1]]:
+                return False
+          else:
+                raise AlgError(
+                      "Siam escape charakteriui"\
+                      "nenumatyta jokia opcija!!!:"\
+                      "\n{}\nEscape charu sarasas"\
+                      ":\n{}".format(context(poz,String),
+                                   texsyntax.METACHAR_ESC),poz)
+    else: return True                                   
 
 def metachar_greedy(poz,String):
     '''Jei esamas charas nera metacharas
@@ -62,7 +73,7 @@ def metachar_greedy(poz,String):
     if metachar(poz,String): return True
     else: 
         raise AlgError(
-            'This is not a metachar'\
+            'Sis simbolis nera metacharas:'\
             '\n{}'.format(context(poz,String)),poz)
 
 def EOS(poz,String):
@@ -79,7 +90,7 @@ def context(poz,String):
     if len(String)-poz<50: after=len(String)-poz
     else: after=50
     if poz==0:
-        return repr('>>'+String[poz]+'<<'+String[poz+1:poz+after])
+        return repr('@>>'+String[poz]+'<<@'+String[poz+1:poz+after])
     else:
         return repr(String[poz-before:poz]+'>>'+String[poz]+'<<'\
                     +String[poz+1:poz+after])
@@ -90,8 +101,8 @@ def skip_whitespace(poz,String):
     i=poz
     if not (String[poz] in texsyntax.WHITESPACE):
         raise AlgError(
-            'This is not a "\
-            "whitespace:\n{}'.format(context(poz,String)),poz)
+            'Tai nera whitespaceas:"\
+            "\n{}'.format(context(poz,String)),poz)
     while String[i] in texsyntax.WHITESPACE:
         if EOS(i,String): 
             # paliekam viena whitespace
@@ -100,52 +111,82 @@ def skip_whitespace(poz,String):
         i+=1
     return i-poz
 
+def is_start_of_comment(i,String):
+    '''Patikriname ar esamas charas yra komentaro
+    pradzia. Jei taip grazina: 
+    - chara kuris isjungs komentara 
+    - opciju rinkini.'''
+    if (String[i] in texsyntax.COMMENT.keys()) and metachar(i,String):
+        return texsyntax.COMMENT[String[a]]
+    else: return False
+           
 def skip_comment(poz,String):
-    '''Nuskaitomas komentaras ir grazinamas jo ilgis.'''
+    '''Nuskaitomas komentaras ir grazinamas jo ilgis.
+    Skaitoma tada, kai komentaro jungiklis yra metachar'''
+    if is_start_of_comment(i,String):
+        cstart=String[poz]
+        cend=is_start_of_comment(i,String)[0]
+        cprop=is_start_of_comment(i,String)[1]
+    else:
+        raise AlgError('Tai nera komentaro "\
+          "jungiklis!:\n{}'.format(context(poz,String)),poz)
     if not metachar(poz,String):
-        raise AlgError('This is not "\
-          "a comment:\n{}'.format(context(poz,String)),poz)
+        raise AlgError('Tai nera komentaro "\
+          "pradzia!:\n{}'.format(context(poz,String)),poz)
     MULTILINE=True
     i=poz
     while MULTILINE:
-        while String[i]!='\n':
+        while String[i]!=cend:
             # jei komentaras uzbaigtu faila
             if EOS(i,String):
                 raise EOSError(
-                    "Comment ends string.\n"\
-                    "Maybe string ends with command,"\
-                    "that must have argument?\n{}".format(context(i,String)),i)
+                    "Komentaras uzbaigia teksta.\n"\
+                    "Tikriausiai buvo ieskoma komandos argumento."\
+                    "Kitiems atvejams skip_comment naudoti, su try\n"\
+                    "{}".format(context(i,String)),i)
             i+=1
         i+=1
-        if String[i]=='%': continue
-        elif String[i] in texsyntax.WHITESPACE:
+        if String[i]==cstart: continue
+        # Jei isjungigklis surenka visus trailing whitespace
+        elif ('w' in cprop) and  (String[i] in texsyntax.WHITESPACE):
                 i+=skip_whitespace(i,String)
                 # jei paskutinis white charas buvo string pabaiga
-                if EOS(i,String): return i-poz
-                if String[i]=='%': continue
+                if EOS(i,String):
+                    raise EOSError(
+                    "Whitespace seka uzbaigia teksta.\n"\
+                    "Tikriausiai buvo ieskoma komandos argumento."\
+                    "Kitiems atvejams skip_comment naudoti, su try"
+                    "\n{}".format(context(i,String)),i)
+                # SURENKAMA KOMENTARU SEKA 
+                if String[i]==cstart: continue
                 else: return i-poz
         else: return i-poz
-          
-def check_self(String):
-    '''Pries parsinant stringa,
-    patikrinama ar jame nera kai kuriu 
-    blogybiu:
-    * Failas uzsibaigia komanda:
-      ideti papildoma whitespace'''
-    pass
 
 def skip_command(poz,String):
-    '''Padavus esama \\ pozicija
-    ir tikrinama stringa komanda ir jos ilgi.'''
-    # jei netycia stringas uzsibaigtu '\'
-    if String[poz]!='\\':
-        raise AlgError(
-            "This is not "\
-            "a start of command:\n{}".format(context(poz,String)),poz)
+    '''Padavus esama \\ pozicija 
+    (\\ gali buti perapibreztas)
+    ir tikrinama stringa grazina komandos ilgi.'''
+    # patikriname ar esamas charas yra komandos
+    # pradzios metacharas
+    char=String[poz]
+    if not (char in texsyntax.START_OF_CMD.keys()):
+        raise AlgError("Tai nera komanda aktyvuojantis charas:"\
+                       "\n{}".format(context(i,String)),poz)
+    elif not texsyntax.START_OF_CMD[char]:
+         raise AlgError(
+                      "Siam aktyviam charakteriui "\
+                      "aprasytai opcijai nenumatyta elgsena!!!:"\
+                      "\n{}Komanda aktyvuojanciu charu sarasas"\
+                      ":\n{}".format(context(poz,String),
+                                   texsyntax.START_OF_CMD),poz)
+    else: pass
+    # Grieztai patikrinam ar tai metacharas    
     if metachar_greedy(poz,String): pass
+    # Jei netycia parsinama eilute uzsibaigtu \\
     if EOS(poz,String):
         raise ParseError(
-            'String ends with \\:\n{}'.format(context(poz,String)),poz)
+            'Parsinama eilute baigiasi ten kur turetu buti'
+            'komandos pradzia:\n{}'.format(context(poz,String)),poz)
     # jei komanda susideda is simbolio
     if not (String[poz+1] in string.ascii_letters):
         return 2
@@ -153,26 +194,30 @@ def skip_command(poz,String):
     while String[i] in texsyntax.COMMAND_CHARS:
         if EOS(i,String):
             # jei netycia komanda uzbaigtu stringa
-            raise EOSError("String ends with command. "\
-                           "\nPlease insert whitespace "\
-                           "before parsing.".format(context(i,String),i))
+            raise EOSError("Renkant komanda buvo pasiektas teksto galas. "\
+                           "\nPries parsinant gale idekite papildoma newline:"\
+                           "\n".format(context(i,String),i)
         i+=1
     return i-poz
     
 def skip_till_argument(poz,String):
     '''Praleidzia visus, nereiksmingus
-    charus iki sekancio argumento.'''
+    charus iki sekancio argumento.
+    Tarp komandos ir argumento galimi tik 
+    iprastiniai komentarai \'%\' '''
     i=poz
-    if not(String[poz] in {'\n','%',' ','\t'}):
-           return 0
+    if String[poz] in texsyntax.BEGIN_OF_ARG:
+        return 0
     if String[i] in texsyntax.WHITESPACE:
         i+=skip_whitespace(i,String)
+        # Galimas tik vienas whitespace
         if String[i]=='\n': 
             i+=1
+    # jei po komandos eina whitespace 
     if String[i]=='\n':
         i+=1
-    while String[i] in {' ','\t','%'}:
-        if String[i]=='%':
+    while not (String[i] in texsyntax.BEGIN_OF_ARG):
+        if is_start_of_comment(i,String):
             i+=skip_comment(i,String)
         elif String[i] in texsyntax.WHITESPACE:
             i+=skip_whitespace(i,String)
@@ -180,6 +225,9 @@ def skip_till_argument(poz,String):
             raise EOSError(
                 "String ends with command,"\
                 "that must have argument:\n{}".format(context(i,String)),i)
+        else: raise AlgError(
+                "Nenumatytas charas tarp argumentu:\n"\
+                "{}".format(context(i,String)),i)
     return i-poz
            
 def skip_braced(poz,String,left='{',right='}'):
@@ -381,13 +429,13 @@ def cmd_type(poz,String):
           
 
 
-print()
-if __name__=='__main__':
-    eil='''\\begin    *    {equation} \\it \\iffalse \\fi \\section   {Tragedija}
-\\index{%cia tik argumentas}, \\comentinarg    {CIA KOMENTARAS} \\def\\zodis{verbatim enviromentas\\begin{a}}'''
-    for i,char in enumerate(eil):
-        if char=='\\' and metachar(i,eil):
-            print(collect_command(i,eil))
+# print()
+# if __name__=='__main__':
+#     eil='''\\begin    *    {equation} \\it \\iffalse \\fi \\section   {Tragedija}
+# \\index{%cia tik argumentas}, \\comentinarg    {CIA KOMENTARAS} \\def\\zodis{verbatim enviromentas\\begin{a}}'''
+#     for i,char in enumerate(eil):
+#         if char=='\\' and metachar(i,eil):
+#             print(collect_command(i,eil))
     
 
 
