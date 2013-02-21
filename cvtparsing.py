@@ -1,14 +1,25 @@
 '''Automatonas skaidantis teksta i triju rusiu eilutes:
 comment, verbatim ir other'''
+try:
+    if __IPYTHON__:
+        if sys.platform=='win32':
+            os.chdir('d:/Luko/vtexparser/')       
+        else:
+            sys.path.append('/home/lukas/vtexparser/')
+except:
+    pass
 
+import string, sys, os 
+import cmdparsing
 
-
-
-import string
-
-WHITESPACE={' ','\t',}
-VERB={'\\verb'}
-
+VERB_CMD={'\\verb','\\xymatrix','\\index'}
+VERB_ENV={'listing','Verbatim','verbatim'}
+###### fikcines komandos ########
+VERB_SWCH={{'\\verbon':'\\verbof'}}
+COMMENT_CMD={'\\commentcmd'}
+#################################
+COMMENT_ENV={'comment'}
+COMMENT_SWCH={{'\\comment':'\\endcomment'}}
 
 def collectcommand(poz,String):
     '''Automatone padavus esama pozicija, 

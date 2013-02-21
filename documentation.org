@@ -1,0 +1,3 @@
+* Klaustukai
+1. Ar comment tipo aplinkose gali buti sintakses klaidu?
+ 

@@ -1,10 +1,12 @@
 '''Modulis, kuriame aprasytas metodas surenkantis komanda ir jos argumentus, priklausomai,
-nuo pateikto patterno COMMANDS zodyne.
+nuo komandos tipo ir jos patterno apibrezto texsyntax modulyje.
 
 Naudojimas: collect_full_command(pozicija,stringas)
 pozicija -- komandos pradzia reiskianti metacharas "\\"
+stringas -- parsinamo failo turinys
 
-Return: '''
+Return: (charu_skaicius,komanda,argumentu listas, originalus_tekstas)'''
+
 import string, sys, os
 
 try:
@@ -16,84 +18,8 @@ try:
 except:
     pass
 
-METACHARACTERS={'#','$','%','^','{','}','_','~','\\'}
-# whitespace'ai kurie yra ne newline 
-WHITESPACE={' ','\t'}
-# komanda sudarantys simboliai, * priskirima prie komandos pav 
-COMMAND_CHARS=list(string.ascii_letters)
-COMMAND_CHARS.append('*')
-ARGUMENT=list(string.ascii_letters+string.digits)
+import texsyntax
 
-# SARASAS NURODANTIS KIEK PAGRINDINIU IR OPCIONALIU ARGUMENTU TURI KOMANDA
-# NURODOMAS PATTERNAS 1--pagr argumentas 0--opcionalus 
-COMMANDS={'\\begin':(1,0),
-          '\\end':(1,),
-          '\\frac':(1,1),
-          '\\usepackage':(0,1),
-          '\\rule':(0,1,1),
-          '\\footnote':(0,1),
-          '\\newcommand':(1,0,0,1),
-          '\\renewcommand':(1,0,0,1),
-          '\\label':(1,),
-          '\\part':(0,1),
-          '\\chapter':(0,1),
-          '\\section':(0,1),
-          '\\subsection':(0,1),
-          '\\subsubsection':(0,1),
-          '\\paragraph':(0,1),
-          '\\subparagraph':(0,1),
-          '\\subsubparagraph':(0,1),
-          '\\subsubsubparagraph':(0,1)}
-
-# ENVIROMENTAI SU OPCIONALIAIS ARGUMENTAIS
-# SKAICIUS ISREISKIA OPCIONALIU ARGUMENTU SKAICIU 
-ENVIROMENTS={'equation':1,
-             'verbatim':0,
-             'comment':0}
-
-# PAGRINDINIAI KOMANDU TIPAI 
-#     * iverb -- inline verbatimas (skirtukai--bet kokie nonalpha symboliai)
-#     * nocomment -- komandos kuriu argumentuose % nereiskia komentaro pradzios
-#     * package -- \usepackage
-#     * env -- enviromentu tagai \begin \end
-#     * switch -- jungiklis
-#     * math -- matematines komandos
-#     * covered -- komandos kuriu argumentai apgaubia komanda is abieju pusiu
-R_TYPE={'iverb':['\\verb'],
-       'nocomment':['\\index',],
-       'package':['\\usepackage'],
-       'syntax':['\\newcommand','\\def']
-       'env':['\\begin','\\end'],
-       'switch':['\\it','\\bf','\\em'],    # switchai neturi nei vieno argumento
-       'math':['\\frac','\\sin','\\leq']
-       'msymbol':['\\alpha','\\beta'],
-       'tsymbol':['\textmu','\textbackslash']}
-
-##### R_TYPE APVERTIMAS #####
-# kad galetume gauti komandos tipa
-TYPE={}
-LIST=[]
-for i in R_TYPE.keys():
-    LIST.append([i,R_TYPE[i]])
-for i,j in LIST:
-    for k in j: TYPE[k]=i 
-
-del LIST
-del R_TYPE
-##############################
-
-### Papildom COMMANDS is R_TYPE #####
-for i in R_TYPE['switch']:
-    COMMANDS[i]=None
-######################################
-    
-BAISUS_PAKETAI={'fancyvrb','listings'}
-BAISIOS_KOMANDOS={'\\DefineShortVerb',     #\DefineShortVerb{ \|} -> |%labas%|
-                  '\\UndefineShortVerb'}
-
-### Verbatimo enviromentai
-VERB_ENV={'Verbatim'}          # \begin{Verbatim}[commentchar=!]
-                     
 class ParseError(Exception):
     '''Motininis parsinimo Erroras'''
     def __init__(self,Msg,Poz):
@@ -113,14 +39,12 @@ class EOSError(ParseError):
     ieskoma ten kur baigesi stringas.'''
     def __init__(self,Msg,Poz):
         super().__init__(Msg,Poz)
-
-        
+       
 class AlgError(ParseError):
     '''Erroras atsirandantis 
     del blogai parasyto algoritmo.'''
     def __init__(self,Msg,Poz):
         super().__init__(Msg,Poz)
-
         
 def metachar(poz,String):
     '''Jei charas yra metacharu sarase, 
@@ -128,7 +52,7 @@ def metachar(poz,String):
     nera \\'''
     if poz==0:
           return True 
-    if String[poz] in METACHARACTERS:
+    if String[poz] in texsyntax.METACHARACTERS:
         return String[poz-1]!='\\'
     else: return True
 
@@ -155,17 +79,20 @@ def context(poz,String):
     if len(String)-poz<50: after=len(String)-poz
     else: after=50
     if poz==0:
-        return repr('[['+String[poz]+']]'+String[poz+1:poz+after])
+        return repr('>>'+String[poz]+'<<'+String[poz+1:poz+after])
     else:
-        return repr(String[poz-before:poz]+'[['+String[poz]+']]'+String[poz+1:poz+after])
+        return repr(String[poz-before:poz]+'>>'+String[poz]+'<<'\
+                    +String[poz+1:poz+after])
     
 def skip_whitespace(poz,String):
     '''Praleidziam visus whitespace,
     grazinam ju ilgi'''
     i=poz
-    if not (String[poz] in WHITESPACE):
-        raise AlgError('This is not a whitespace:\n{}'.format(context(poz,String)),poz)
-    while String[i] in WHITESPACE:
+    if not (String[poz] in texsyntax.WHITESPACE):
+        raise AlgError(
+            'This is not a "\
+            "whitespace:\n{}'.format(context(poz,String)),poz)
+    while String[i] in texsyntax.WHITESPACE:
         if EOS(i,String): 
             # paliekam viena whitespace
             # kitoms funkcijoms
@@ -176,7 +103,8 @@ def skip_whitespace(poz,String):
 def skip_comment(poz,String):
     '''Nuskaitomas komentaras ir grazinamas jo ilgis.'''
     if not metachar(poz,String):
-        raise AlgError('This is not a comment:\n{}'.format(context(poz,String)),poz)
+        raise AlgError('This is not "\
+          "a comment:\n{}'.format(context(poz,String)),poz)
     MULTILINE=True
     i=poz
     while MULTILINE:
@@ -190,7 +118,7 @@ def skip_comment(poz,String):
             i+=1
         i+=1
         if String[i]=='%': continue
-        elif String[i] in WHITESPACE:
+        elif String[i] in texsyntax.WHITESPACE:
                 i+=skip_whitespace(i,String)
                 # jei paskutinis white charas buvo string pabaiga
                 if EOS(i,String): return i-poz
@@ -211,19 +139,23 @@ def skip_command(poz,String):
     ir tikrinama stringa komanda ir jos ilgi.'''
     # jei netycia stringas uzsibaigtu '\'
     if String[poz]!='\\':
-        raise AlgError('This is not a start of command:\n{}'.format(context(poz,String)),poz)
+        raise AlgError(
+            "This is not "\
+            "a start of command:\n{}".format(context(poz,String)),poz)
     if metachar_greedy(poz,String): pass
     if EOS(poz,String):
-        raise ParseError('String ends with \\:\n{}'.format(context(poz,String)),poz)
+        raise ParseError(
+            'String ends with \\:\n{}'.format(context(poz,String)),poz)
     # jei komanda susideda is simbolio
     if not (String[poz+1] in string.ascii_letters):
         return 2
     i=poz+1
-    while String[i] in COMMAND_CHARS:
+    while String[i] in texsyntax.COMMAND_CHARS:
         if EOS(i,String):
             # jei netycia komanda uzbaigtu stringa
-            raise EOSError("String ends with command."+\
-                           "\nPlease insert whitespace before parsing.",len(String))
+            raise EOSError("String ends with command. "\
+                           "\nPlease insert whitespace "\
+                           "before parsing.".format(context(i,String),i))
         i+=1
     return i-poz
     
@@ -233,7 +165,7 @@ def skip_till_argument(poz,String):
     i=poz
     if not(String[poz] in {'\n','%',' ','\t'}):
            return 0
-    if String[i] in WHITESPACE:
+    if String[i] in texsyntax.WHITESPACE:
         i+=skip_whitespace(i,String)
         if String[i]=='\n': 
             i+=1
@@ -242,7 +174,7 @@ def skip_till_argument(poz,String):
     while String[i] in {' ','\t','%'}:
         if String[i]=='%':
             i+=skip_comment(i,String)
-        elif String[i] in WHITESPACE:
+        elif String[i] in texsyntax.WHITESPACE:
             i+=skip_whitespace(i,String)
         if EOS(i,String):
             raise EOSError(
@@ -253,10 +185,12 @@ def skip_till_argument(poz,String):
 def skip_braced(poz,String,left='{',right='}'):
         '''Grazina apskliausto reiskinio ilgi.'''        
         i=poz
-        if EOS(i,String):
-            raise EOSError(
-                "String ends where "\
-                "should be an argument!".format(context(i,String)),i)
+        if left=='{':
+            if EOS(i,String):
+                raise EOSError(
+                        "Tekstas baigiasi, ten kur "\
+                        "turetu buti pagrindinis argumentas!".format(
+                                context(i,String)),i)
         i+=1
         braces=[1,0]
         while not braces[0]==braces[1]:
@@ -265,7 +199,8 @@ def skip_braced(poz,String,left='{',right='}'):
                     i+=skip_comment(i,String)
                 except EOSError:
                     raise MatchError(
-                        'No pair found!:\n{}'.format(context(poz,String)),poz)
+                        'Nerasta skliausto pora!:\n{}'.format(
+                            context(poz,String)),poz)
             if (String[i] in (left+right)) and metachar(i,String):
                 if String[i]== left: 
                     braces[0]+=1
@@ -274,9 +209,37 @@ def skip_braced(poz,String,left='{',right='}'):
             if braces[0]==braces[1]: break
             if  EOS(i,String):
                 raise MatchError(
-                    'No pair found!:\n{}'.format(context(poz,String)),poz)
+                    'Nerasta skliausto pora!:\n{}'.format(
+                        context(poz,String)),poz)
             i+=1
         return i-poz+1
+
+def skip_braced_verb(poz,String,left='{',right='}'):
+        '''Grazina apskliausto reiskinio ilgi.
+        Reiskinyje netikrinamas komentaru buvimas'''        
+        i=poz
+        if left=='{':
+            if EOS(i,String):
+                raise EOSError(
+                        "Tekstas baigiasi, ten kur "\
+                        "turetu buti pagrindinis argumentas!".format(
+                                context(i,String)),i)
+        i+=1
+        braces=[1,0]
+        while not braces[0]==braces[1]:
+            if (String[i] in (left+right)) and metachar(i,String):
+                if String[i]== left: 
+                    braces[0]+=1
+                elif String[i]==right:
+                    braces[1]+=1
+            if braces[0]==braces[1]: break
+            if  EOS(i,String):
+                raise MatchError(
+                    'Nerasta skliausto pora:\n{}'.format(
+                        context(poz,String)),poz)
+            i+=1
+        return i-poz+1
+
 
 def skip_argument(poz,String):
     '''Surenkamas komandos argumentas, priklausomai,
@@ -286,42 +249,97 @@ def skip_argument(poz,String):
         i+=skip_command(i,String)
     elif String[poz]=='{':
         i+=skip_braced(i,String)
-    elif String[poz] in ARGUMENT:
+    elif String[poz] in texsyntax.ARGUMENT:
         i+=1
     else: 
         raise AlgError(
-            "Turejo buti pagrindinis argumentas:\n".format(context(i,String)),i)
+            "Turejo buti "\
+            " pagrindinis argumentas:\n".format(context(i,String)),i)
     return i-poz
-              
-def collect_full_command(poz,String):
-    global COMMANDS
+
+def skip_argument_verb(poz,String):
+    '''Surenkamas komandos argumentas,
+    kurio turinys verbatiminis.'''
+    i=poz
+    if String[poz]=='\\':
+        raise ParseEroor(
+            "Esamas argumentas turetu buti apskliaustas"\
+            "nes jo turinys verbatim tipo".format(
+                context(i,String),i))
+    elif String[poz]=='{':
+        # NEBEIGNORUOJAM KOMENTARU ARGUMENTE 
+        i+=skip_braced_verb(i,String)
+    elif String[poz] in texsyntax.ARGUMENT:
+        raise ParseEroor(
+            "Esamas argumentas turetu buti apskliaustas"\
+            "nes jo turinys verbatim tipo".format(
+                context(i,String),i))
+    else: 
+        raise AlgError(
+            "Turejo buti "\
+            " pagrindinis argumentas:\n".format(context(i,String)),i)
+    return i-poz
+
+    
+def collect_command(poz,String):
+    '''Surenka komanda, su jos argumentais, jei komandos
+    argumentas yra verb tipo tai netikriname, komentaru buvimo
+    ir pasiimame iki uzdarancio skliausto.
+
+    Jei komanda turi comment tipo argumenta, velgi sokama
+    i uzdaranti skliausta.'''
     komanda=''
     args=[]
     i=poz
-
+    
     ilg=skip_command(i,String)
     komanda=String[i:i+ilg]
     i+=ilg
+    print('\n\n')
+    print("KOMANDA:",komanda)
+    print("POZICIJA:", context(i,String))
 
     # susirenkam zvaigzdute
-    # atsiskiria nuo komandos kaip ir argumentas
-    ilg=skip_till_argument(i,String)
-    if String[i+ilg]=='*':
-        komanda=komanda+'*'
-        i+=ilg
-    else:
-        pass
+    # ji atsiskiria nuo komandos kaip ir argumentas
+    if komanda[-1:]!='*':
+        ilg=skip_till_argument(i,String)
+        if String[i+ilg]=='*':
+            komanda=komanda+'*'
+            i+=ilg+1
+            print("surinkau komanda su zvaigzdute\n"\
+            "dabartine mano pozicija:{}".format(
+                context(i,String)))
+            print("KOMANDASUZV:",komanda)
+            
+        else:
+            pass
     
-    pattern=COMMANDS.get(komanda,None)
+    print("Pradedu rinkti argumentus:\n",context(i,String)) 
+    pattern=texsyntax.COMMANDS.get(komanda,None)
+    print("Paternas:",pattern)
     if not pattern:
         args=None
     else:
-        for k in pattern:
+        print("Si komanda turi paterna!!!")
+        print("ESAME:",context(i,String))
+        for nr,k in enumerate(pattern):
+            # jei komandos argumentas verb tipo
+            if komanda in texsyntax.VERB_ARGS.keys():
+                print("Si komanda turi verbatiminiu argumentu")
+                if texsyntax.VERB_ARGS[komanda][nr]:
+                    skip=skip_argument_verb
+                else: skip=skip_argument
+            else: skip=skip_argument
+            
             if k:
+                print("ieskom pagrindinio argumento:\n",
+                      context(i,String))
                 ilg=skip_till_argument(i,String)
                 i+=ilg
+                print("pagrindinio argumento pradzia:\n",
+                      context(i,String))
 
-                ilg=skip_argument(i,String)
+                ilg=skip(i,String)
                 args.append(String[i:i+ilg])
                 i+=ilg
             else:
@@ -333,11 +351,49 @@ def collect_full_command(poz,String):
                     args.append(String[i:i+ilg])
                     i+=ilg
                 else:
-                    print
                     args.append(None)
                     pass
                 
-    return i-poz, komanda, args, String[poz:i], (poz,i)    
+    return i-poz, komanda, args, String[poz:i], (poz,i)
 
+def cmd_type(poz,String):
+    '''Grazinamas komandos tipas, patikra vyksta 
+    nuo \\. 
+    
+    Return: (tipas,tipo_patenas)'''
+    i=poz
+    i+=skip_command(poz,String)
+    if String[poz:i] in texsyntax.ENV_START:
+        print(collect_command(poz,String))
+        return 'envstart', collect_command(poz,String)[2][0]
+    elif String[poz:i] in texsyntax.ENV_END:
+        return 'envend', collect_command(poz,String)[2][0]
+    elif String[poz:i] in texsyntax.SWITCH:
+        return 'switch', None
+    elif String[poz:i] in texsyntax.STRICT_SWITCH.keys():
+        return 'strictswitch',texsyntax.STRICT_SWITCH[String[poz:i]]
+    elif String[poz:i] in texsyntax.COMMANDS.keys():
+        return 'command', texsyntax.COMMANDS[String[poz:i]]
+    else: return None
+
+
+
+          
+
+
+print()
+if __name__=='__main__':
+    eil='''\\begin    *    {equation} \\it \\iffalse \\fi \\section   {Tragedija}
+\\index{%cia tik argumentas}, \\comentinarg    {CIA KOMENTARAS} \\def\\zodis{verbatim enviromentas\\begin{a}}'''
+    for i,char in enumerate(eil):
+        if char=='\\' and metachar(i,eil):
+            print(collect_command(i,eil))
+    
+
+
+        
+
+
+    
 
 
