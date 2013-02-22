@@ -20,11 +20,12 @@ WHITESPACE={' ','\t'}
 ########## KOMANDOS 
 
 # METACHARAS REISKIANTIS KOMANDOS PAVADINIMO PRADZIA
+# paliekama vieta opcijoms
 START_OF_CMD={'\\':None}
     
 # Komanda sudarantys simboliai, * priskirima prie komandos pav 
-COMMAND_CHARS=list(string.ascii_letters)
-COMMAND_CHARS.append('*')
+COMMAND_CHARS=set(string.ascii_letters)
+COMMAND_CHARS.update('*')
 
 # SARASAS NURODANTIS KIEK PAGRINDINIU IR OPCIONALIU ARGUMENTU TURI KOMANDA
 # NURODOMAS PATTERNAS 1--pagr argumentas 0--opcionalus 
@@ -71,6 +72,12 @@ BEGIN_OF_ARG.update(set(ARG_DELIMS.keys()))
 # METAJUNGIGLIS: (ISJUNGIKLIS, (SAVYBES,))
 # w -- reiskia, kad po isjungimo bus suvalgomi whitespace
 COMMENT={'%':('\n',('w',))}
+
+
+############## SUPORUOTI SKLIAUSTAI
+BRACES={'[':']',
+        '(':')'}
+
 
 
 
