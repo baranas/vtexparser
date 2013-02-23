@@ -54,12 +54,12 @@ def context(poz,String,End=False,Range=50,Tag=False,Delim=False):
     else:
         delim=''
     if Tag:
-        ltag=delim+'<'+Tag+'@@@>'+delim
-        rtag=delim+'<@@@'+Tag+'>'+delim
+        ltag=delim+'<'+Tag+'@-->'+delim
+        rtag=delim+'<--@'+Tag+'>'+delim
     else:
         delim=''
-        ltag=' @@@>>'
-        rtag='<<@@@ '
+        ltag=delim+'@-->>'
+        rtag='<<@--'+delim
     if not End:
         
         End=poz
@@ -207,7 +207,7 @@ def is_start_of_cmd(poz,String,
         if metachar(poz,String): return True
         else: return False
 
-def skip_command(poz,String,
+def skip_command_name(poz,String,
                  START_OF_CMD=texsyntax.START_OF_CMD,
                  COMMAND_CHARS=texsyntax.COMMAND_CHARS):
     '''Padavus esama \\ pozicija 
@@ -219,14 +219,15 @@ def skip_command(poz,String,
     if not is_start_of_cmd(poz,String):
         raise AlgError("Tai nera komanda aktyvuojantis simbolis:"\
                        "\n{}".format(context(i,String)),poz)
-    elif not START_OF_CMD[char]:
-         raise AlgError(
+                       
+    if START_OF_CMD[char]:
+        raise AlgError(
                       "Pakeista komandos aktyvavimo sintakse "\
                       "ir nenumatyta elgsena!!!:"\
                       "\n{}Komanda aktyvuojanciu charu sarasas"\
                       ":\n{}".format(context(poz,String),
                                       START_OF_CMD),poz)
-    else: pass
+    else:pass
     # Jei netycia parsinama eilute uzsibaigtu \\
     if EOS(poz,String):
         raise ParseError(
@@ -245,39 +246,44 @@ def skip_command(poz,String,
         i+=1
     return i-poz
 
-# ############# Komandos vardu atpazinimas 
-test_dir=os.path.join(os.path.curdir,'test/')
-list_of_files=os.listdir(test_dir)
-list_of_files=[os.path.join(test_dir,a) for a in list_of_files]
-for fn in list_of_files:
-    if fn[-8:]!='test.tex': continue
-    with open(fn,'rt',encoding="ascii") as failas:
-        textas=failas.read()
-        i=0
-        try:
-            while True:
-                textas[i]
-                # komentaru parsinimo demonstracija
-                if (i<3284):
-                    if is_start_of_comment(i,textas):
-                        k=skip_comment(i,textas)
-                        print(context(i,textas,End=i+k,Tag='COMMENT',Range=0))
-                        i+=k
-                        continue
-                    else:
-                        print(textas[i],end='')
-                        i+=1
-                        continue
-                i+=1
-        except EOSError:
-            print("DARBAS BAIGTAS")
-            failas.close()
-        except IndexError:
-            print("DARBAS BAIGTAS")
-            failas.close()
+def is_verbatim(poz,String,VERB=texsyntax.VERB):
+    '''Patikrina ar esama komanda yra
+    verbatimines aplinkos pradzia.
+    Grazina: 
+    i-jei inline verbatimas
+    e-jei enviromentas
+    s-jei grieztas switchas'''
+    if not is_start_of_cmd(poz,String):
+        return False
+    k=skip_command_name(poz,String)
+    if String[poz:poz+k] in VERB.keys():
+        return VERB[String[poz:poz+k]]
+    else: return False
     
-            
+def skip_inline_verbatim(poz,String):
+    '''Verbatimine aplinka neturi aktyviu charu
+    vienintelis aktyvus charas yra verbatimo esamas
+    skirtukas.'''
+    i=poz
+    k=skip_command_name(poz,String)
+    if String[i:i+k]!='\\verb':
+        raise AlgError(
+            "Cia ne inline verbatimo pradzia:\n"\
+            "{}".format(context(i,String)),i)
+    i+=k
+    sym=String[i]; i+=1
+    while String[i]!=sym:
+        i+=1
+        if EOS(i,String):
+            raise EOSError("Renkant inline verbatima buvo "\
+                         "pasiektas teksto galas.:\n"\
+                         "{}".format(context(poz,String),poz),poz)
+    i+=1
+    return i-poz
     
+
+
+
 def skip_till_argument(poz,String,BEGIN_OF_ARG=texsyntax.BEGIN_OF_ARG):
     '''Praleidzia visus, nereiksmingus
     charus iki sekancio argumento.
@@ -301,11 +307,103 @@ def skip_till_argument(poz,String,BEGIN_OF_ARG=texsyntax.BEGIN_OF_ARG):
                 "Parsinamas tekstas baigiasi "\
                 "komanda, kuri turi tureti argumenta:"\
                 "\n{}".format(context(i,String)),i)
-        else: raise AlgError(
-                "Nenumatytas charas tarp argumentu:\n"\
-                "{}".format(context(i,String)),i)
+        # else: raise AlgError(
+        #         "Nenumatytas charas tarp argumentu:\n"\
+        #         "{}".format(context(i,String)),i)
     return i-poz
-   
+
+############## DEMONSTRACIJA 
+test_dir=os.path.join(os.path.curdir,'test/')
+list_of_files=os.listdir(test_dir)
+list_of_files=[os.path.join(test_dir,a) for a in list_of_files]
+for fn in list_of_files:
+    if fn[-8:]!='test.tex': continue
+    with open(fn,'rt',encoding="ascii") as failas:
+        textas=failas.read()
+        i=0
+        try:
+            while True:
+                textas[i]
+                ###################################
+                # komentaru parsinimo demonstracija
+                if (i<3357):
+                    i+=1
+                    continue
+                    if is_start_of_comment(i,textas):
+                        k=skip_comment(i,textas)
+                        print(context(i,textas,End=i+k,Tag='C',Range=0,Delim=''),end='')
+                        i+=k
+                        continue
+                    else:
+                        print(textas[i],end='')
+                        i+=1
+                        continue
+                ###################################
+                # komandu atpazinimo demonstracija
+                # komandos vardo pradzia
+                if (i>=3357) and (i<3844):
+                    # skipinimui
+                    i+=1
+                    continue
+                    if is_start_of_cmd(i,textas):
+                        print(context(i,textas,End=i+k,Range=0,Delim=''),end='')
+                        i+=k
+                        continue
+                    else:
+                        print(textas[i],end='')
+                        i+=1
+                        continue
+                # komandos vardas 
+                if (i>=3844) and (i<3992):
+                    i+=1
+                    continue 
+                    if is_start_of_cmd(i,textas):
+                        k=skip_command_name(i,textas)
+                        print(context(i,textas,End=i+k,Tag='NoC',Range=0,Delim=''),end='')
+                        i+=k
+                        continue
+                    else:
+                        print(textas[i],end='')
+                        i+=1
+                        continue
+                ################################
+                # inline verbatimai 
+                if (i>=3992) and (4554>i):
+                    i+=1
+                    continue 
+                    if is_verbatim(i,textas):
+                        k=skip_inline_verbatim(i,textas)
+                        print(context(i,textas,End=i+k,Tag='V',Range=0,Delim=''),end='')
+                        i+=k
+                        continue
+                    else:
+                        print(textas[i],end='')
+                        i+=1
+                        continue
+                ############################## 
+                # kelione iki argumento
+                if (i>=4554) and (5119>i):
+                    if is_start_of_cmd(i,textas):
+                        k=skip_command_name(i,textas)
+                        name=textas[i:i+k]
+                        print(name,end='')
+                        i+=k
+                        i+=skip_till_argument(i,textas)
+                        continue
+                    else:
+                        print(textas[i],end='')
+                        i+=1
+                        continue
+
+                i+=1
+        except EOSError:
+            print("DARBAS BAIGTAS")
+            failas.close()
+        except IndexError:
+            print("DARBAS BAIGTAS")
+            failas.close()
+
+    
 def skip_braced(poz,String,meta=True,verb=False,
                 COMMENT_SYNTAX=texsyntax.COMMENT):
         '''Grazina apskliausto reiskinio ilgi.

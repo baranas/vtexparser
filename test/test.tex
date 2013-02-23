@@ -2,7 +2,13 @@
 
 \begin{document}
 
+
+
+
+
 \section{Komentarai}
+
+
 Sioje sekcijoje parsinami tik komentarai:
 % LaTeX Dokumento parsinime svarbiausia yra apeiti komentarus
 % ir verbatimines aplinkas.
@@ -11,15 +17,18 @@ Sioje sekcijoje parsinami tik komentarai:
 % Taciau komentaras kartu uzbaigia ir LaTeX'o komandos skaityma
 t.y \LaTeX% Sis komentaras texo kompiliatoriui pasako, 
 % kad \LaTeX yra pilna komanda
-   tekstas. Ismetus komentara sintaksinis ekvivalentas turetu buti: \LateX tekstas arba \LateX{}tekstas  
+   tekstas. Ismetus komentara sintaksinis ekvivalentas turetu buti: 
+\LateX tekstas arba \LateX{}tekstas  
 % o ne \LaTeXtekstas
 Taciau jei vietoj \LaTeX butu zodis pvz: nebeprisikiskia%
-          kopusteliaudavome -- yra ekvivalentu zodziui be komentaro: nebeprisikiskiakopusteliaudavome
+          kopusteliaudavome -- yra ekvivalentu zodziui be komentaro: 
+nebeprisikiskiakopusteliaudavome
 
 Todel salinant komentarus yra svarbu zinoti konteksta, kuriame komentaras yra. 
 % Cia kitas komentaras
 
 \section{Aktyvus simboliai}
+
 Kaip suzinoti ar esamas simbolis turi tiesiogine prasme ar ne?
 
 LaTeX kalboje standartineje modoje yra apibrezti 9
@@ -79,10 +88,156 @@ Taciau, kitu komandu argumentuose gali buti komentaru
 Taigi renkant argumentus BUTINA zinoti ar argumente nera pakeista 
 iprastine sintakse
 
+
+
+
+
+
 \section{Komandos}
 
-\subsection{Kaip atpazinti komandos pilna varda}
 
+
+
+\subsection{Kaip atpazinti komandos pradzia}
+
+Norint nuskaityti komandos identifikacija reikia atpazinti simboli,
+kuris reiskia jos pradzia. 
+Iprastoje \LaTeX 'o modoje komanda aktyvuojantis simbolis 
+yra % \ 
+Toliau einanti ascii raidziu seka yra komandos
+pavadinimas. Taciau jei sekantis simbolis nera nei viena is ascii 
+raidziu, tai komandos identifkacija ir bus tas simbolis.
+Svabu teisingai pagauti komanda aktyvuojancius simbolius.
+
+\\ \textbackslash \{ \} \\ 
+\\\\\\ \\[10pt] {\ }\ 
+
+
+
+
+
+\subsection{Komandos pavadinimo atpazinimas}
+
+\textbackslash{}\textbf{komandos_pavadinimas}
+\\\ \, \; \*
+\
+\\texttt{cia ne komanda} \quad \\qquad
+\\\\\\\\\\\ \\\
+\textbullet
+
+
+
+
+
+ 
+\subsection{Inline verbatimai}
+
+
+
+Renkant komandu argumentus pries tai yra svarbu atpazinti, 
+kur yra komentaras ir kur verbatimine aplinka.
+Inline verbatimai skiriasi nuo kitu standartiniu LaTeX komandu tuo, kad 
+ju argumento skirtukai yra bet kokie nealfabetiniai simboliai.
+Jo argumento viduje nera jokiu aktyviu simboliu.
+
+\verb!Tai yra verbatimas!
+\verb
+verbatimo skirtukais gali buti net newline
+\verb!aktyvus charai cia tik simboliai {}#$%^_~\\!
+\verb# verbatimo viduje % reiskia procenta#
+\verb% verbatimas gali buti 
+ir daugialinijinis% 
+
+
+
+
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% 
+\subsection
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% 
+       {Kelias iki argumento}
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% 
+
+Texas sutikes komanda turincia argumentus ignoruoja 
+komentarus ir whitespace iki argumento pradzios.
+
+\texttt               {tekstas}
+
+\textit 
+            {tekstas2}
+
+\textbf           
+%%%%%%%%%%%%%%%%%%%%%%%
+%%%%%%%%%%%%%%%
+           {textas3}
+
+\def%%%%%%%%%%%%%%%%%%%                       
+         \komanda{komanda} 
+
+$\frac           1     2$
+
+
+
+\subsection{Problema su argumentais}
+
+Kadangi mus domina suparsinto medzio susirinkimas,
+o ne dvi failo kurimas realiu laiku interpretuojant skripta,
+uzduotis siek tiek pasunkeja. 
+Kad ir kaip bebutu keista, skriptas noredamas surinkti 
+komandos argumenta turi jau moketi surinkti enviromentus,
+grieztus switchus ir kitas komandas su argumentais.
+Puikus to pavyzdziai:
+\textbf{
+\begin{comment}
+tai netikras galas}
+\end{comment}
+}
+
+\texttt{\iffalse }\fi }
+
+\textit{ \index{a%b} }
+
+\textbf{lalala}
+
+
+Taigi pries renkant globaliai komandu argumentus
+turi buti didele duomenu baze su surasytom aplinkom:
+% 
+\begin{enumerate}
+\item kuriu turinys yra komentarai
+  % 
+\begin{enumerate}
+\item[a] \verb!comment! paketas 
+\begin{itemize}
+\item \verb!\comment...\endcomment!
+\item \verb!\begin{comment}...\end{comment}
+\item 
+  % 
+\begin{verbatim}
+\includecomment{versiona}
+\excludecoment{versionb}
+\end{verbatim}
+  % 
+Leidzia naudoti kaip komentarus naujus apibrezimus 
+% 
+\begin{verbatim}
+\versiona ... \endversiona
+\begin{versiona} ... \end{versiona}
+\end{verbatim}
+ % 
+\end{itemize}
+\end{enumerate}
+ 
+\item kuriu turinyje egzistuoja kita negu standartine sintakse.
+Konkreciu atveju, tos aplinkos, kuriu turinyje komentaro zenklas
+reiskia visai ka kita.
+\begin{itemize}
+\item \verb!\index{aaa%bbb}!
+\item \verb!\begin{listing}...\end{listing}!
+\item \verb!\begin{Verbatim}[commentchar=@]...\end{Verbatim}!
+\end{itemize}
+  
 
 
 \end{document}

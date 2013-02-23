@@ -152,16 +152,13 @@ SWITCH={'\\it','\\tt','\\em'}
 # VERB APIBREZIMAI
 # inline verbatimas
 # argumento skirtukai -- bet kokie simboliai
-VERB={'\\verb'}
+VERB={'\\verb':'i'}
 # komandos turincios verbatiminius argumentus 
 # verbatiminiais argumentais vadinsime
 # visus argumentus, kuriu viduje keiciasi TeX sintakse
 # Jei pagrindinis argumentas V, jei opcionalus v, jei ne verb None
 VERB_CMD={'\\index':('V')}
 VERB_ENV={'Verbatim','verbatim'}          # \begin{Verbatim}[commentchar=!]
-
-        
-
 
 COMMENT_CHAR={'%'}
 
