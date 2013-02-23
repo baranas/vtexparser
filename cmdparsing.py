@@ -46,32 +46,37 @@ class AlgError(ParseError):
     def __init__(self,Msg,Poz):
         super().__init__(Msg,Poz)
 
-def context(poz,String,End=False,range=50,Tag=False,Delim=False):
+def context(poz,String,End=False,Range=50,Tag=False,Delim=False):
     '''Grazina eilutes konteksta apie esama
     charu seka, iskirdama chara.'''
     if Delim:
         delim=Delim
     else:
-        delim='\n'
+        delim=''
     if Tag:
-        ltag=delim+'<pradzia:'+Tag+'>'+delim
-        rtag=delim+'<pabaiga:'+Tag+'>'+delim
+        ltag=delim+'<'+Tag+'@@@>'+delim
+        rtag=delim+'<@@@'+Tag+'>'+delim
     else:
         delim=''
-        ltag=' @>>'
-        rtag='<<@ '
+        ltag=' @@@>>'
+        rtag='<<@@@ '
     if not End:
-        End=poz     
-    if poz<=range: before=poz
-    else: before=range
         
-    if len(String)-End<=range: after=len(String)-End
-    else: after=50
-    if poz==0:
-        return (ltag+String[poz:End+1]+rtag+String[End+1:End+after])
+        End=poz
+    else: End=End-1
+    if poz<=Range: before=poz
+    else: before=Range
+        
+    if len(String)-End<=Range: after=len(String)-End
+    else: after=Range
+    if Tag:
+        return (ltag+String[poz:End+1]+rtag)
     else:
-        return (String[poz-before:poz]+ltag+String[poz:End+1]+rtag\
-                    +String[end+1:end+after])
+        if poz==0:
+            return (ltag+String[poz:End+1]+rtag+String[End+1:End+after])
+        else:
+            return (String[poz-before:poz]+ltag+String[poz:End+1]+rtag\
+                    +String[End+1:End+after])
 
 def escaped(poz,String,ESC_CH=texsyntax.METACHAR_ESC):
     '''Patikriname ar esamas charas 
@@ -136,20 +141,13 @@ def skip_whitespace(poz,String,WHITES=texsyntax.WHITESPACE):
             'Tai nera whitespaceas:"\
             "\n{}'.format(context(poz,String)),poz)
     i=poz
-    while String[i] in WHITESPACE:
+    while String[i] in WHITES:
         if EOS(i,String): 
             # paliekam viena whitespace
             # kitoms funkcijoms
             return i-poz
         i+=1
     return i-poz
-
-
-test_dir=os.path.join(os.path.curdir,'test/')
-list_of_files=os.listdir(test_dir)
-list_of_files=[os.path.join(test_dir,a) for a in list_of_files]
-                  
-
 
 def is_start_of_comment(i,String,COMMENT=texsyntax.COMMENT):
     '''Patikriname ar esamas charas yra komentaro
@@ -199,22 +197,11 @@ def skip_comment(poz,String,COMMENT=texsyntax.COMMENT):
                 else: return i-poz
         else: return i-poz
 
-for fn in list_of_files:
-    with open(fn,'rt',encoding="ascii") as failas:
-        textas=failas.read()
-        for i,j in enumerate(textas):
-            if is_start_of_comment(i,textas):
-                k=skip_comment(i,textas)
-                print('\n',k,'\n')
-                print(context(i,textas,End=k,Tag='komentaras'))                
-                input()        
-
-def is_start_of_cmd(poz,String,
-                    
+def is_start_of_cmd(poz,String,                  
                     START_OF_CMD=texsyntax.START_OF_CMD,
                     COMMAND_CHARS=texsyntax.COMMAND_CHARS):
     '''Patikrinama ar esamas charas yra komandos pradzia.'''
-    if not (String[poz] in STAR_OF_CMD.keys()):
+    if not (String[poz] in START_OF_CMD.keys()):
         return False
     else:
         if metachar(poz,String): return True
@@ -257,6 +244,39 @@ def skip_command(poz,String,
                            "arba naudokite try:\n".format(context(i,String),i))
         i+=1
     return i-poz
+
+# ############# Komandos vardu atpazinimas 
+test_dir=os.path.join(os.path.curdir,'test/')
+list_of_files=os.listdir(test_dir)
+list_of_files=[os.path.join(test_dir,a) for a in list_of_files]
+for fn in list_of_files:
+    if fn[-8:]!='test.tex': continue
+    with open(fn,'rt',encoding="ascii") as failas:
+        textas=failas.read()
+        i=0
+        try:
+            while True:
+                textas[i]
+                # komentaru parsinimo demonstracija
+                if (i<3284):
+                    if is_start_of_comment(i,textas):
+                        k=skip_comment(i,textas)
+                        print(context(i,textas,End=i+k,Tag='COMMENT',Range=0))
+                        i+=k
+                        continue
+                    else:
+                        print(textas[i],end='')
+                        i+=1
+                        continue
+                i+=1
+        except EOSError:
+            print("DARBAS BAIGTAS")
+            failas.close()
+        except IndexError:
+            print("DARBAS BAIGTAS")
+            failas.close()
+    
+            
     
 def skip_till_argument(poz,String,BEGIN_OF_ARG=texsyntax.BEGIN_OF_ARG):
     '''Praleidzia visus, nereiksmingus
@@ -521,7 +541,26 @@ def cmd_type(poz,String):
 #                 print(context(i,textas))
 #                 input()        
 
-
-    
-
+  
+# # #############INLINE KOMENTARU TESTINIMAS
+# test_dir=os.path.join(os.path.curdir,'test/')
+# list_of_files=os.listdir(test_dir)
+# list_of_files=[os.path.join(test_dir,a) for a in list_of_files]
+# for fn in list_of_files:
+#     if fn[-8:]!='test.tex': continue
+#     with open(fn,'rt',encoding="ascii") as failas:
+#         textas=failas.read()
+#         i=0
+#         try:
+#             while True:
+#                 if is_start_of_comment(i,textas):
+#                     k=skip_comment(i,textas)
+#                     print(context(i,textas,End=i+k,Tag='komentaras'))
+#                     input()
+#                     i+=k 
+#                 i+=1
+#         except IndexError:
+#             print("DARBAS BAIGTAS")
+#         except EOSError:
+#             print("DARBAS BAIGTAS")
 

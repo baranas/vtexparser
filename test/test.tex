@@ -1,0 +1,88 @@
+\documentclass{article}
+
+\begin{document}
+
+\section{Komentarai}
+Sioje sekcijoje parsinami tik komentarai:
+% LaTeX Dokumento parsinime svarbiausia yra apeiti komentarus
+% ir verbatimines aplinkas.
+% Inline komentaras iprastiniame LaTeX dokumente prasideda % ir baigiasi, \n
+       % kartu surinkdamas sekancioje eiluteje visus trailing whitespace.
+% Taciau komentaras kartu uzbaigia ir LaTeX'o komandos skaityma
+t.y \LaTeX% Sis komentaras texo kompiliatoriui pasako, 
+% kad \LaTeX yra pilna komanda
+   tekstas. Ismetus komentara sintaksinis ekvivalentas turetu buti: \LateX tekstas arba \LateX{}tekstas  
+% o ne \LaTeXtekstas
+Taciau jei vietoj \LaTeX butu zodis pvz: nebeprisikiskia%
+          kopusteliaudavome -- yra ekvivalentu zodziui be komentaro: nebeprisikiskiakopusteliaudavome
+
+Todel salinant komentarus yra svarbu zinoti konteksta, kuriame komentaras yra. 
+% Cia kitas komentaras
+
+\section{Aktyvus simboliai}
+Kaip suzinoti ar esamas simbolis turi tiesiogine prasme ar ne?
+
+LaTeX kalboje standartineje modoje yra apibrezti 9
+aktyvus simboliai % {'#','$','%','^','{','}','_','~','\\'}
+. Juos vadinsime metacharakter'iais. Visa kas neaktyvuota vienu is siu 
+simboliu yra traktuojama, kaip tekstas. 
+
+LaTeX'o kalboje nebuna persiklojanciu aplinku. %[1{ 12  ]2 }.
+Aplinkos gali buti tiktai nested tipo. %[1{2 (3)}  ]
+Sis skriptas turetu parsinti keliais lygmenym. Pirmuoju (virsutiniu lygmeniu) 
+vadinsime isorinius elementus: 
+
+1) neaktyvuota teksta
+
+2) inline komentarus
+
+3) zinomas komandas:
+* komandas kartu su argumentais, jei zinomas ju paternas % \texttt{ARGUMENTAS}
+* inline verbatimo komanda % \verb!tai verbatimas!
+* grieztus switchus ir turini tarp ju %\iffalse TURINYS \fi
+* simbolius % \\textbullet
+
+* negrieztus switchus, kurie veikia tik esamoje aplinkoje %\tt \it
+* TeXo opciju perapibrezimus %\tablewidth=10cm
+* enviromentus
+
+4) Su nezinomom komandom susidorosime rinkdami ju apubrezimus ir atskirai
+surinkdami visus aktyviais skliaustais %{} 
+apgaubtus elementus.
+
+Rinkdami grieztus switchus bei enviromentus turime atsizvelgti,
+kad ju viduje, gali buti apibrezta, kita sintakse. 
+T.y. gali buti visai kitas metacharackteriu rinkinys ir pasikeitusi ju prasme.
+% begin{listing} viduje % nebereiskia komentaro pradzios \end{listing}
+
+% \iffalse viduje isvis neskaitomi jokie metacharai iskyrus '\',
+% kad galetume pagauti \fi
+
+Kad susidoroti su sia problema, nusprendziau aprasyti dinamine LaTeX'o
+sintakse. T.y. pradedant darba metacharu 
+rinkinys, % METACHARACTERS={'#','$','%','^','{','}','_','~','\\'}
+komanda aktyvuojantis simbolis, % START_OF_CMD={'\\':None}
+ilgos komandos apibrezimo simboliai, % COMMAND_CHARS=set(string.ascii_letters)
+inline komentara aktyvuojantis simbolis, % COMMENT={'%':('\n',('w',))}
+argumentu skirtukai, % ARG_DELIMS={'{':'}'}
+yra standartiskai apibrezti, su galimybe parsinimo eigoje juos keisti.
+
+Neisimtis yra ir komandu argumentai, 
+% Pvz \index argumente '%' nera komentaras,
+% kitas pavyzdys butu xymatrix{...}
+taciau su jais susidoroti yra lengviau, nes ju argumentai
+TIKRIAUSIAI visada buna apskliausti metaskliaustais % {}
+
+Taciau, kitu komandu argumentuose gali buti komentaru
+% \textbf{Tai yra tekstas % o tai nera argumento uzbaigimas}
+
+Taigi renkant argumentus BUTINA zinoti ar argumente nera pakeista 
+iprastine sintakse
+
+\section{Komandos}
+
+\subsection{Kaip atpazinti komandos pilna varda}
+
+
+
+\end{document}

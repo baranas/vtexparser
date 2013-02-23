@@ -25,6 +25,7 @@ START_OF_CMD={'\\':None}
     
 # Komanda sudarantys simboliai, * priskirima prie komandos pav 
 COMMAND_CHARS=set(string.ascii_letters)
+# Sita reiks pakeisti
 COMMAND_CHARS.update('*')
 
 # SARASAS NURODANTIS KIEK PAGRINDINIU IR OPCIONALIU ARGUMENTU TURI KOMANDA
