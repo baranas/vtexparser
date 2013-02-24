@@ -281,9 +281,6 @@ def skip_inline_verbatim(poz,String):
     i+=1
     return i-poz
     
-
-
-
 def skip_till_argument(poz,String,BEGIN_OF_ARG=texsyntax.BEGIN_OF_ARG):
     '''Praleidzia visus, nereiksmingus
     charus iki sekancio argumento.
@@ -311,6 +308,100 @@ def skip_till_argument(poz,String,BEGIN_OF_ARG=texsyntax.BEGIN_OF_ARG):
         #         "Nenumatytas charas tarp argumentu:\n"\
         #         "{}".format(context(i,String)),i)
     return i-poz
+
+
+def do_what(poz,String):
+    '''Sutikus metachara, nustatoma jo reiksme
+    esamoje sintakseje, ir parenkama atitinkama 
+    funkcija kuri bus atliekama'''
+    
+
+    
+def what_type_function(poz,String):
+    '''Sutike komanda aktyvuojanti simboli,
+    nustatome
+    
+
+    
+def skip_paired_expresion(poz,String,verb=False,
+                       comment=False,
+                       COMMENT_SYNTAX=texsyntax.COMMENT,
+                       METACHARACTERS=texsyntax.METACHARACTERS)
+    '''Suranda suporuota skliausta, isjungtuka arba enviromento
+    uzdaryma!!!'''
+    
+
+def skip_strict_switch(poz,String,verb=False,
+                       comment=False,
+                       COMMENT_SYNTAX=texsyntax.COMMENT,
+                       METACHARACTERS=texsyntax.METACHARACTERS)
+    '''Griezto switcho surinkimas, tipo \\iffalse ...  \\fi '''
+
+
+
+    
+def skip_braced(poz,String,
+                meta=True,
+                verb=False,
+                COMMENT_SYNTAX=texsyntax.COMMENT,
+                METACHARACTERS=texsyntax.METACHARACTERS):
+        '''Grazina apskliausto reiskinio ilgi.
+        Jei meta=True, tai renka tik aktyvius skliaustus,
+        jei ne tai ieskos esamo skliausto poros.
+
+        Jei verb==True, tai is sintakses bus trumpam ismesti 
+        komentaro charai ir tarp skliaustu esancius % traktuos 
+        kaip simbolius.'''
+        if len(COMMENT_SYNTAX)!=1:
+            raise AlgError(
+                "Komentaro sintakses apibrezime yra daugiau"\
+                "negu vienas simbolis:\n"\
+                "{}\n{}".format(COMMENT_SYNTAX,context(i,String)),i)           
+        COMMENT_SYNTAX=texsyntax.COMMENT
+        if meta:
+            DELIMETERS=texsyntax.ARG_DELIMS
+        else:
+            DELIMETERS=texsyntax.BRACES
+       # jei apskliaustas reiskinys yra
+        # verbatimine aplinka, ir procento zenklas nereiskia 
+        # komentaro pradzios
+        if verb:
+            del COMMENT_SYNTAX['%']
+        i=poz
+        char=String[poz]
+        if (char in texsyntax.DELIMETERS.keys()) and metachar(poz,String):
+            left=String[poz]
+            right=texsyntax.ARG_DELIMS[left]
+        else:
+            raise AlgError("Tai nera argumento skirtukas:"\
+                           "\n{}".format(context(i,String)),i)
+        if EOS(i,String):
+            raise EOSError(
+                "Tekstas baigiasi, ten kur "\
+                "turetu buti skliaudziamas argumentas!".format(
+                    context(i,String)),i)
+        i+=1
+        braces=[1,0]
+        while not braces[0]==braces[1]:
+            if String[i] in COMMENT_SYNTAX.keys() and metachar(i,String):
+                try:
+                    i+=skip_comment(i,String)
+                except EOSError:
+                    raise MatchError(
+                        'Nerasta skliausto pora!:\n{}'.format(
+                            context(poz,String)),poz)
+            if (String[i] in (left+right)) and metachar(i,String):
+                if String[i]==left: 
+                    braces[0]+=1
+                elif String[i]==right:
+                    braces[1]+=1
+            if braces[0]==braces[1]: break
+            if  EOS(i,String):
+                raise MatchError(
+                    'Nerasta skliausto pora!:\n{}'.format(
+                        context(poz,String)),poz)
+            i+=1
+        return i-poz+1
 
 ############## DEMONSTRACIJA 
 test_dir=os.path.join(os.path.curdir,'test/')
@@ -403,67 +494,8 @@ for fn in list_of_files:
             print("DARBAS BAIGTAS")
             failas.close()
 
-    
-def skip_braced(poz,String,meta=True,verb=False,
-                COMMENT_SYNTAX=texsyntax.COMMENT):
-        '''Grazina apskliausto reiskinio ilgi.
-        Jei meta=True, tai renka tik aktyvius skliaustus,
-        jei ne tai ieskos esamo skliausto poros.
 
-        Jei verb==True, tai is sintakses bus trumpam ismesti 
-        komentaro charai ir tarp skliaustu esancius % traktuos 
-        kaip simbolius.'''
-        if len(COMMENT_SYNTAX)!=1:
-            raise AlgError(
-                "Komentaro sintakses apibrezime yra daugiau"\
-                "negu vienas simbolis:\n"\
-                "{}\n{}".format(COMMENT_SYNTAX,context(i,String)),i)           
-        COMMENT_SYNTAX=texsyntax.COMMENT
-        if meta:
-            DELIMETERS=texsyntax.ARG_DELIMS
-        else:
-            DELIMETERS=texsyntax.BRACES
-       # jei apskliaustas reiskinys yra
-        # verbatimine aplinka, ir procento zenklas nereiskia 
-        # komentaro pradzios
-        if verb:
-            del COMMENT_SYNTAX['%']
-        i=poz
-        char=String[poz]
-        if (char in texsyntax.DELIMETERS.keys()) and metachar(poz,String):
-            left=String[poz]
-            right=texsyntax.ARG_DELIMS[left]
-        else:
-            raise AlgError("Tai nera argumento skirtukas:"\
-                           "\n{}".format(context(i,String)),i)
-        if EOS(i,String):
-            raise EOSError(
-                "Tekstas baigiasi, ten kur "\
-                "turetu buti skliaudziamas argumentas!".format(
-                    context(i,String)),i)
-        i+=1
-        braces=[1,0]
-        while not braces[0]==braces[1]:
-            if String[i] in COMMENT_SYNTAX.keys() and metachar(i,String):
-                try:
-                    i+=skip_comment(i,String)
-                except EOSError:
-                    raise MatchError(
-                        'Nerasta skliausto pora!:\n{}'.format(
-                            context(poz,String)),poz)
-            if (String[i] in (left+right)) and metachar(i,String):
-                if String[i]==left: 
-                    braces[0]+=1
-                elif String[i]==right:
-                    braces[1]+=1
-            if braces[0]==braces[1]: break
-            if  EOS(i,String):
-                raise MatchError(
-                    'Nerasta skliausto pora!:\n{}'.format(
-                        context(poz,String)),poz)
-            i+=1
-        return i-poz+1
-
+        
 def skip_braced_verb(poz,String,left='{',right='}'):
         '''Grazina apskliausto reiskinio ilgi.
         Reiskinyje netikrinamas komentaru buvimas'''        

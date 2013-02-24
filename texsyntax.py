@@ -2,25 +2,96 @@
 komandos'''
 import string, os, sys
 
-# SIMBOLIAI VISADA RODO I OPCIJA
-# GAL TO NEPRIREIKS, TACIAU PALIEKU GALIMYBE 
-# PAKEISTI SINTAKSE IR KEICIANT PRIDETI OPCIJAS
-# JOS PAGAL NUTYLEJIMA YRA None
+#################### METACHARAI IR JU REIKSMES
+##############################################
 
-#################### METACHARAI IR SPACE'AI
+########### IPRASTINIAI METACHARAI
+# Skripto vykdymo metu bus tikrinama ar esamas charas
+# nera metacharakteris
+# (numatoma galimybe dinamiskai keisti sita aibe)
+METACHARACTERS={'#','$','%','^','{','}','_','~','\\','&'}
 
-# METACHARAI, TURINTYS SINTAKSINE PRASME
-METACHARACTERS={'#','$','%','^','{','}','_','~','\\'}
+###### METACHARAKTERIAI SKIRTINGOSE MODOSE
+# Metacharo reiksme yra raktinis zodis,
+# nurodanti kokio tipo objektas bus inicializuotas
+# ir koks algoritmas bus taikomas objekto surinkimui.
+#
+# Inline verbatimai ir komentarai bus surenkami paprasciau.
+#
+# Laikui begant sis sarasas bus pildomas analizuojant dazniausiai
+# pasitaikancius paketus ir ju aplinkas
+# Reikia tureti omenyje, kad paketai gali (nors ir retai) pakeisti
+# iprastine sintakse
+#
+# PRIELAIDA: visi metacharai susidaro is vieno ascii simbolio
+
+# Iprastiniai metacharai iprastinese modose, be paketui.
+# skirtingu paketu metacharakteriu sintakse bus papildyta veliau
+# ja pajungiant i skripto darba, tada, kai toks paketas bus rastas
+METACH={'text':{'$':'imath',
+                '%':'icomment',
+                '{':'mbraces',
+                '~':'space',
+                '\\':'tcommand',
+                # sutikus atidaranti skliausta, bus sokam
+                # i chara uz uzdarancio
+                # sutikti uzdaranciu negalima
+                '}':'error',         
+                '#':'error',
+                '^':'error',
+                '_':'error',
+                '&':'error'},
+         'math':{'$':'end',
+                '%':'icomment',
+                '{':'mbraces',
+                '~':'space',
+                '\\':'mcommand',
+                '^':'superscript',
+                '_':'subscript',
+                '}':'error',         
+                '#':'error',
+                '&':'error'}}
+         # kol kas verb vadinsime visas aplinkas,
+         # kuriose nereikia gaudyti 
+         # -inline komentaru
+         # -matematikos 
+         # -metaskliaustu  ir t.t. 
+         'verb':{'\\':'vcommand'},
+         'tabular':{'$':'imath',
+                '%':'icomment',
+                '{':'mbraces',
+                '~':'space',
+                '\\':'tabcommand',
+                '&':'sep',
+                '}':'error',         
+                '#':'error',
+                '^':'error',
+                '_':'error'},
+          'array':{'$':'imath',
+                '%':'icomment',
+                '{':'mbraces',
+                '~':'space',
+                '\\':'mtabcommand',
+                '&':'sep',
+                '}':'error',         
+                '#':'error',
+                '^':'error',
+                '_':'error'}}
+                
+
 # METACHARO ESKEIPAS
+# simbolis kuriam esant pries metachara,
+# metacharas igyja kita prasme
+# (numatant galimybe dinamiskai keisti)
 METACHAR_ESC={'\\':None}
      
 # EILUTES Whitespace'ai  
 WHITESPACE={' ','\t'}
 
-########## KOMANDOS 
+############################## KOMANDOS 
 
 # METACHARAS REISKIANTIS KOMANDOS PAVADINIMO PRADZIA
-# paliekama vieta opcijoms
+# (paliekama vieta opcijoms giliau nagrinejant TeX'o kalba)
 START_OF_CMD={'\\':None}
     
 # Komanda sudarantys simboliai, * priskirima prie komandos pav 
@@ -28,29 +99,113 @@ COMMAND_CHARS=set(string.ascii_letters)
 # Sita reiks pakeisti
 COMMAND_CHARS.update('*')
 
+########### KOMANDU SU ARGUMENTAIS PATERNAI
 # SARASAS NURODANTIS KIEK PAGRINDINIU IR OPCIONALIU ARGUMENTU TURI KOMANDA
-# NURODOMAS PATTERNAS 1--pagr argumentas 0--opcionalus 
-COMMANDS={'\\begin':(1,0),
-          '\\end':(1,),
-          '\\frac':(1,1),
-          '\\usepackage':(0,1),
+# * JEI ARGUMENTU TIPAS NEZINOMAS, 
+# NURODOMAS PATTERNAS: 1--pagr argumentas 0--opcionalus
+# * JEI ARGUMENTE KEICIASI SINTAKSE (PVZ KOMENTARU)
+# NURODOMA DIDZIOJI RAIDE PAGR. ARGUMENTAMS
+# MAZOJI OPCIONALIEMS
+# * JEI TIKSLIAI ZINOMA KAD, KOMANDOS ARGUMENTAS YRA IPRASTA
+#   TEKSTINE MODA 
+# RASOMA 'T' PAGR. ARGUMENTAMS, 't' OPCIONALIEMS
+# 
+# * JEI KOMANDA YRA SYMBOLIS TAI PATERNAAS YRA NONE
+
+# TEKSTINES MODOS KOMANDOS
+T_COMMANDS={'\\usepackage':(0,1),
           '\\rule':(0,1,1),
-          '\\footnote':(0,1),
+          '\\footnote':(0,'T'),
           '\\newcommand':(1,0,0,1),
           '\\renewcommand':(1,0,0,1),
+          '\\def':(1,1),
           '\\label':(1,),
-          '\\part':(0,1),
-          '\\chapter':(0,1),
-          '\\section':(0,1),
-          '\\subsection':(0,1),
-          '\\subsubsection':(0,1),
-          '\\paragraph':(0,1),
-          '\\subparagraph':(0,1),
-          '\\subsubparagraph':(0,1),
-          '\\subsubsubparagraph':(0,1),
-          '\\index':(1,),
-          '\\commentinarg':(1,),
-          '\\def':(1,1)}
+          '\\part':(0,'T'),
+          '\\chapter':(0,'T'),
+          '\\section':(0,'T'),
+          '\\subsection':(0,'T'),
+          '\\subsubsection':(0,'T'),
+          '\\paragraph':(0,'T'),
+          '\\subparagraph':(0,'T'),
+          '\\subsubparagraph':(0,'T'),
+          '\\subsubsubparagraph':(0,'T'),
+          '\\mbox':('T',)
+          '\\index':('V',),
+          '\\def':(1,1),
+          '\\textbackslash':None}
+
+# MATEMATINES MODOS KOMANDOS 
+M_COMMANDS={'\\frac':(1,1),
+            '\\alpha':None,
+            '\\mathbf':(1,)}
+
+# TABBULAR IR ARRAY atitinkamai naudosis tais paciais
+# T_COMMANDS ir M_COMMANDS komandu rinkiniais
+# tik skirtingai traktuos \\\\ ir prisides keletas
+# nauju komandu, tokiu, kaip \\cr, \\eqncr ir t.t.
+
+   
+# BEVEIK VISOMS MODOMS BUDINGOS KOMANDOS
+
+##################### ENVIROMENTAI
+
+#### ENV PRADZIOS AR PABAIGOS JUNGIKLIAI
+# PALIEKAMA GALIMYBE PAPILDYTI
+# SUTIKATAS PAVYZDYS:
+# \def{\be}{\begin}
+ENV_SWITCHES={'\\begin':'\\end'}
+
+############### ENVIROMENTU PATERNAI
+ENVIROMENTS={'equation':(0,),
+             'pf':(0,),
+             'pf*':(1,)}
+
+###### VERBATIMO ENVIROMENTAI IR GRIEZTI SWITCHAI
+# Butina atpazinti visur ir moketi apeiti
+# atliekant bet koki kita komandos, modos ar
+# apskliauto reiskinio surinkima, kartu
+# su inline verbatimais ir komentarais.
+VERB_ENV={'Comment','Verbatim','listing'}
+
+VERB_SWITCH={'\iffalse':'\fi',
+             '\comment':'\endcomment'}
+
+
+########################################
+####################  SYNTAKSES
+######################################## 
+# APIBREZIAMOS SKIRTINGOS SYNTAKSES
+# KURIOS BUS PERDUODAMOS SKIRTINGOSM 
+# MODOMS
+
+SYNTAX={
+    # TEKSTINES MODOS SINTAKSE
+    'T': {'metach':METACH['text'],
+          'cmd_chars':COMMAND_CHARS,
+          'cmd_start':START_OF_CMD,
+          'commands':T_COMMANDS},
+    # MATEMATINES MODOS SINTAKSE
+    'M': {'metach':METACH['math'],
+          'cmd_chars':COMMAND_CHARS,
+          'cmd_start':START_OF_CMD,
+          'commands':T_COMMANDS}
+    # VERBATIMINES MODOS SYNTAKSE
+    'V': {'metach':METACH['verb'],
+          'cmd_chars':COMMAND_CHARS,
+          'cmd_start':START_OF_CMD,
+          'commands':{}}
+    # INLINE COMMENTARU SYNTAKSE
+    # end_w--reiskia: pasibaik 
+    # ir surink trailing whitespace
+    'C': {'metach':{'\n':'end_w'},
+          'cmd_chars':COMMAND_CHARS,
+          'cmd_start':START_OF_CMD,
+          'commands':{}}
+
+
+
+
+
 
 ############### KOMANDU ARGUMENTAI
     
