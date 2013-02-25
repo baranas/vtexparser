@@ -50,7 +50,7 @@ METACH={'text':{'$':'imath',
                 '_':'subscript',
                 '}':'error',         
                 '#':'error',
-                '&':'error'}}
+                '&':'error'},
          # kol kas verb vadinsime visas aplinkas,
          # kuriose nereikia gaudyti 
          # -inline komentaru
@@ -129,7 +129,7 @@ T_COMMANDS={'\\usepackage':(0,1),
           '\\subparagraph':(0,'T'),
           '\\subsubparagraph':(0,'T'),
           '\\subsubsubparagraph':(0,'T'),
-          '\\mbox':('T',)
+          '\\mbox':('T',),
           '\\index':('V',),
           '\\def':(1,1),
           '\\textbackslash':None}
@@ -151,66 +151,27 @@ M_COMMANDS={'\\frac':(1,1),
 
 #### ENV PRADZIOS AR PABAIGOS JUNGIKLIAI
 # PALIEKAMA GALIMYBE PAPILDYTI
-# SUTIKATAS PAVYZDYS:
+# SUTIKTAS PAVYZDYS:
 # \def{\be}{\begin}
-ENV_SWITCHES={'\\begin':'\\end'}
+ENV_SWITCH={'\\begin':'\\end'}
 
-############### ENVIROMENTU PATERNAI
-ENVIROMENTS={'equation':(0,),
-             'pf':(0,),
-             'pf*':(1,)}
+############### ENVIROMENTU PATERNAI IR TIPAI
+# PIRMAS ARGUMENTAS NURODO PATERNA
+# ANTRAS NURODO TURINIO SYNTAKSE
+ENVIROMENTS={'equation':[(0,),'M'],
+             'pf':[(0,),'T'],
+             'pf*':[(1,),'T'],
+             'verbatim':[None,'V'],
+             'comment':[None,'V'],
+             'listing':[None,'V']}
 
-###### VERBATIMO ENVIROMENTAI IR GRIEZTI SWITCHAI
-# Butina atpazinti visur ir moketi apeiti
-# atliekant bet koki kita komandos, modos ar
-# apskliauto reiskinio surinkima, kartu
-# su inline verbatimais ir komentarais.
-VERB_ENV={'Comment','Verbatim','listing'}
-
-VERB_SWITCH={'\iffalse':'\fi',
-             '\comment':'\endcomment'}
-
-
-########################################
-####################  SYNTAKSES
-######################################## 
-# APIBREZIAMOS SKIRTINGOS SYNTAKSES
-# KURIOS BUS PERDUODAMOS SKIRTINGOSM 
-# MODOMS
-
-SYNTAX={
-    # TEKSTINES MODOS SINTAKSE
-    'T': {'metach':METACH['text'],
-          'cmd_chars':COMMAND_CHARS,
-          'cmd_start':START_OF_CMD,
-          'commands':T_COMMANDS},
-    # MATEMATINES MODOS SINTAKSE
-    'M': {'metach':METACH['math'],
-          'cmd_chars':COMMAND_CHARS,
-          'cmd_start':START_OF_CMD,
-          'commands':T_COMMANDS}
-    # VERBATIMINES MODOS SYNTAKSE
-    'V': {'metach':METACH['verb'],
-          'cmd_chars':COMMAND_CHARS,
-          'cmd_start':START_OF_CMD,
-          'commands':{}}
-    # INLINE COMMENTARU SYNTAKSE
-    # end_w--reiskia: pasibaik 
-    # ir surink trailing whitespace
-    'C': {'metach':{'\n':'end_w'},
-          'cmd_chars':COMMAND_CHARS,
-          'cmd_start':START_OF_CMD,
-          'commands':{}}
-
-
-
-
-
+SWITCHES={'\\iffalse':['\\fi','V'],
+          '\\comment':['\\endcomment','V']}
 
 ############### KOMANDU ARGUMENTAI
     
 # SKIRTUKAI APGAUBIANTYS PAGRINDINI ARGUMENTA
-ARG_DELIMS={'{':'}'}
+
 
 # KAS BUS ARGUMENTU, JEI TAI NE KOMANDA IR NE APSKLIAUSTAS
 # REISKINYS
@@ -230,36 +191,56 @@ BEGIN_OF_ARG.update(set(ARG_DELIMS.keys()))
 COMMENT={'%':('\n',('w',))}
 
 
-############## SUPORUOTI SKLIAUSTAI
-BRACES={'[':']',
-        '(':')'}
+############## SUPORUOTI REISKINIAI
+# opcijos: 
+# meta--butina tikrinti ar
+#     neeskeipintas
+# None -- vieno simbolio skirtukai
+# mch -- sudarytas is daugiau, negu vieno charo
+BRACES={'[':[']',None],
+        '(':[')',None],
+        '{':['}','meta'],
+        '``':["''",'mch'}
 
+ARG_DELIMS={'{':['}','meta']}
+########################################
+####################  SYNTAKSES
+######################################## 
+# APIBREZIAMOS SKIRTINGOS SYNTAKSES
+# KURIOS BUS PERDUODAMOS SKIRTINGOSM 
+# MODOMS
 
+SYNTAX={
+    # TEKSTINES MODOS SINTAKSE
+    'T': {'metach':METACH['text'],
+          'cmd_chars':COMMAND_CHARS,
+          'cmd_start':START_OF_CMD,
+          'escape':METACHAR_ESC,
+          'commands':T_COMMANDS,
+          'icomment':COMMENT,
+          'env_switch':ENV_SWITCH,
+          'mbraces':ARG_DELIMS,
+          'braces':BRACES,
+          'arg_beg':BEGIN_OF_ARG,
+          'switches':SWITCHES},
+    # MATEMATINES MODOS SINTAKSE
+    'M': {'metach':METACH['math'],
+          'cmd_chars':COMMAND_CHARS,
+          'escape':METACHAR_ESC,
+          'cmd_start':START_OF_CMD,
+          'commands':T_COMMANDS,
+          'icomment':COMMENT},
+    # VERBATIMINES MODOS SYNTAKSE
+    'V': {'metach':METACH['verb'],
+          'cmd_chars':COMMAND_CHARS,
+          'cmd_start':START_OF_CMD,
+          'commands':{}},
+    # INLINE COMMENTARU SYNTAKSE
+    # end_w--reiskia: pasibaik 
+    # ir surink trailing whitespace
+    'C': {'metach':{'\n':'end_w'},
+          'commands':{}}}
 
-
-# ENVIROMENTU PRADZIOS, GALI BUTI PERAPIBREZTOS
-# TODEL REIKIA NUMATYTI GALIMYBE PAPILDYTI SITA LISTA
-# ENV_START IR END NESUSIJE, NES GALIMA ABIBREZTI 
-# \\be ir uzbaigti \\end{equation}                                      
-ENV_START={'\\begin'}
-ENV_END={'\\end'}
-
-# ENVIROMENTAI GALI BUTI APIBREZTI KAIP 
-# GRIEZTI SWITCHAI
-E_SWITCH={'\\be':'\\ee'}
-
-# ENVIROMENTAI SU OPCIONALIAIS ARGUMENTAIS
-# IR JU PATTERNAI
-ENVIROMENTS={'equation':(0,),
-             'verbatim':(0,),
-             'comment':(0,),
-             'pf':(0,),
-             'pf*':(1,0)}
-
-# Griezti switchai, reikalaujantys isjungtuko
-STRICT_SWITCH={'\\iffalse':'\\fi',
-               '\\comment':'\\endcomment'}
-STRICT_SWITCH.update(E_SWITCH)
 
 # Negriezti switchai: ju gyvavimo sritis
 # yra esama aplinka
