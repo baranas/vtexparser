@@ -170,16 +170,7 @@ SWITCHES={'\\iffalse':['\\fi','V'],
 
 ############### KOMANDU ARGUMENTAI
     
-# SKIRTUKAI APGAUBIANTYS PAGRINDINI ARGUMENTA
 
-
-# KAS BUS ARGUMENTU, JEI TAI NE KOMANDA IR NE APSKLIAUSTAS
-# REISKINYS
-ARGUMENT=set(string.ascii_letters+string.digits)
-# ARGUMENTO PRADZIOS SIMBOLIAI
-BEGIN_OF_ARG=ARGUMENT
-BEGIN_OF_ARG.update(set(START_OF_CMD.keys()))
-BEGIN_OF_ARG.update(set(ARG_DELIMS.keys()))
 # CHARAI KURIUOS SUTIKUS AISKU, KAD 
 
 
@@ -200,9 +191,21 @@ COMMENT={'%':('\n',('w',))}
 BRACES={'[':[']',None],
         '(':[')',None],
         '{':['}','meta'],
-        '``':["''",'mch'}
+        '``':["''",'mch']}
 
 ARG_DELIMS={'{':['}','meta']}
+
+# SKIRTUKAI APGAUBIANTYS PAGRINDINI ARGUMENTA
+
+
+# KAS BUS ARGUMENTU, JEI TAI NE KOMANDA IR NE APSKLIAUSTAS
+# REISKINYS
+ARGUMENT=set(string.ascii_letters+string.digits)
+# ARGUMENTO PRADZIOS SIMBOLIAI
+BEGIN_OF_ARG=ARGUMENT
+BEGIN_OF_ARG.update(set(START_OF_CMD.keys()))
+BEGIN_OF_ARG.update(set(ARG_DELIMS.keys()))
+
 ########################################
 ####################  SYNTAKSES
 ######################################## 
@@ -219,6 +222,7 @@ SYNTAX={
           'commands':T_COMMANDS,
           'icomment':COMMENT,
           'env_switch':ENV_SWITCH,
+          'enviroments':ENVIROMENTS,
           'mbraces':ARG_DELIMS,
           'braces':BRACES,
           'arg_beg':BEGIN_OF_ARG,
@@ -300,7 +304,6 @@ COMMENT_CHAR={'%'}
 
 ########## NEAISKU AR REIKES ##################
 # FIKCINE KOMANDA
-COMMENT_CMD={'\commentinarg':('V')}
 VERB_ARGS=VERB_CMD
 # KOL KAS KOMENTARO TIPO ARGUMENTAI SUTAMPA SU VERBATIMO
 VERB_ARGS.update(COMMENT_CMD)

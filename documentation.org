@@ -1,3 +1,25 @@
 * Klaustukai
 1. Ar comment tipo aplinkose gali buti sintakses klaidu?
  
+* Algoritmas
+1. Pradedama parsinima:
+    Tevelis=None
+2. Renkam viska kas nera metacharai iprastoje sintakseje ir
+traktuojam kaip teksta.
+3.Sutike metachara kvieciam atitinkama metoda apibrezta standartinei sintaksei.
+  a) elementai neturintys turinio:
+      * symboliai
+      * opcijos
+      * inline komentaras
+      * inline verbatimas
+      * nezinomos komandos
+      * nustatymai \tablewidth=10pt
+      
+  b) elementai turintys turini ir galima kitokia sintakse
+      * apskliaustas reiskinys {}
+        is naujo inicializuojam parsinimo procesa:
+            Tevelis=tai kas sustabdys esama parsinima 
+              siuo atveju '{'                   
+      * komanda: opcionalus ir pagrindiniai argumentai:
+          - {} ir [] reiskiniu surinkimas
+      *

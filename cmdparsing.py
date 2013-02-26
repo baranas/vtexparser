@@ -411,13 +411,165 @@ def check_matching_switches(poz,String,switch,syntax='T'):
         elif String[poz:poz+k]==SWITCHES[switch][0]:
             return 'right', k
 
-def check_mathcing_braces(poz,String,char,syntax='T'):
+def check_mathcing_braces(poz,String,char='{',syntax='T'):
     '''Tikrina ar esmas charas yra uzdarantis ar 
     atidarantis.'''
     keys=texsyntax.SYNTAX[syntax]['braces'].keys()
     values=[i for i,j in texsyntax.SYNTAX[syntax]['braces'].values()]
+    # jei ieskosime metaskliaustu
+    # idedamas tikrinimas ar neeskeipintas charas
+    BRACES=texsyntax.SYNTAX[syntax]['braces']
+    if (String[poz]!=char) and (String[poz]!=BRACES[char][0]):
+        return False
+    # JEI ieskomas charas yra metacharas
+    # butina patikrinti ar jis ir yra
+    # metacharas ir ar neeskeipintas
+    if 'meta' in BRACES[char]:
+        check=lambda i,String,syntax : metachar(i,String,syntax)
+    # JEI ne tai tik tikrinam ar neeskeipintas 
+    else: 
+        check=lambda i,String,syntax : not escaped(i,String,syntax)
+    if check(i,String,syntax):
+         if String[poz]==char:
+             return ('left',1)
+         else:
+             return ('right',1)
+
+
+
+         
+# ESAMAME LYGMENYJE KELIAUJAMA PO CHARA KOL SUTINKAMAS ESAMOS
+# SINTAKSES METACHARAS, SUTIKUS PARENKAMAS ATITINKAMAS ALGORITMAS 
+# ESAMOJE SINTAKSEJE. 
+
+# TEKSTINEJE MODOJE JEI SUTINKAMAS '%' SURENKAMAS I KOMENTARAS
+# SU TRAILING WHITESPACE IR NUSOKAMA I PIRMA NEKOMENTARO SIMBOLI
+
+# JEI SUTINKAMA KOMANDA PATIKRINAMA AR YRA KAS NORS ZINOMA APIE JA.
+# JEI TA KOMANDA YRA KOMANDA SU ARGUMENTAIS SURINKINEJAMI ARGUMENTAI
+# VIDUJE JU PARENKANT ATITINKAMA SINTAKSE
+
+# JEI TAI GRIEZTAS SWITCHAS SURENKAMAS JO TURINYS ATITINKAMAI PARENKANT
+# SINTAKSE VIDUJE
+
+# JEI TAI ENVIROMENTAS SURENKAMAS JO TURINYS, ATITINKAMAI PARINKUS JO 
+# SINTAKSE VIDUJE 
+
+
+def skip_text(poz,String,syntax='T'):
+    '''Surenkamas visas tekstas, kuris
+    nera aktyvuotas aktyviais simboliais.'''
+    i=poz
+    while not metachar(i,String,syntax):
+        i+=1
+    return i-poz
+        
+# Apibreziami metodai, ir opcionaliai
+# tagai
+
+def collect_name_and_choose(poz,String,syntax):
+    '''Sutikus komanda aktyvuojanti symboli,
+    surenkamas komandos pavadinimas ir parenkamas
+    tolimesnis rinkimo algoritmas'''
+    pass
+
+
+def choose_checking(opening,syntax='T'):
+    '''Parenka modos uzdarymo tikrinimo mechanizma!!!
+    Grazina funkcija, kuria bus tikrinama!'''
+    BACES=texsyntax.SYNTAX[syntax]['braces']
+    if opening in BRACES['keys']:
+        return lambda poz, String:\
+           check_mathcing_braces(poz,String,opening,syntax)
+    ENVIROMENTS=texsyntax.SYNTAX[syntax]['enviroments']
+    elif opening in ENVIROMENTS.keys():
+        return lambda poz, String:\
+           check_matching_env(poz,String,opening,syntax)        
+    SWITCHES=texsyntax.SYNTAX[syntax]['switches']       
+    elif opening in SWITCHES.keys():
+        return lambda poz, String:\
+           check_matching_switches(poz,String,opening,syntax)
+    else: 
+        raise AlgError("Reiskinys, kurio uzdarymo ieskoma:\n{}\n"\
+             "neapibreztas, nei tarp metaskliaustu:\n{}\n"\
+             "nei tarp enviromentu:\n{}\n"\
+             "nei tarp grieztu switchu:\n{}"\
+             "\n".format(opening,BRACES),0)
+            
+def parse(String,syntax='T',opening=None,address=None):
+    '''Surinkinejamas teskstas iki tol, kol
+    kol bus sutiktas esamos modos uzdarymo 
+    reiskinys!'''
+    SYNTAX=texsyntax.SYNTAX[syntax]
+    METACHARS=SYNTAX['metach']
+    # JEI REIKIA TIKRINTI, KADA UZSIBAIGS MODA
+    # REIKIA NURODYTI CHECK MECHANIZMA
+    if opening:
+        check=choose_checking(opening,syntax)
+    else:
+        ckeck=lambda i,j : False
+    i=0
+    while True:
+        try:
+            if not metachar(poz,String,syntax):
+                k=skip_text(poz,String,syntax)
+                i+=k
+                continue
+            else:
+                if check:
+                    return i
+                else:
+                    k=do_the_right_thing(poz,String,syntax)
+                    i+=k
+                    continue
+        except EOSerror:
+            print("\n\nPASIBAIGE!!!")
+                    
+def do_the_right_thing(poz,String,syntax='T'):
+    '''Jei esamas charas yra metacharas,
+    apibreztoje syntakseje, iskviecia
+    reikalinga algoritma. Ir grazina ilgi 
+    skriptinio teksto, kuris buvo suparsintas.'''
+    if metachar(poz,String,syntax):
+        # PARENKAMAS METODAS
+        method=METHODS[METACHARS[String[poz]]][0]
+        tag=METHODS[METACHARS[String[poz]]][1]
+        k=method(poz,String,syntax)
+        print(' <'+tag+'>>'+String[poz:poz+k]+'<<'+tag+'> ',end='')
+        return k
+    else:
+        k=skip_text(poz,String,syntax)
+        print(' <'+"TXT"+'>>'+String[poz:poz+k]+'<<'+"TXT"+'> ',end='')
+        return k
+                
+        
+METHODS={'icomment':[skip_comment,'CMT'],
+         'tcommand':[collect_name_and_choose,'CMDNM']
+         'mbraces':[initiate_deeper_parsing,'BRACED']}
+
+COMMANDS{''}
+
+
+    
+    
+        
     
 
+         
+def find_match(poz,String,syntax='T'):
+    '''IESKOMA SUPORUOTO REISKINIO, 
+    ATITINKAMAI KVIECIANT SITA PACIA 
+    FUNKCIJA PAIESKOS PROCESE!
+    - verbatiminiai komandu argumentai
+    - verbatiminiai enviromentai
+    - verbatiminiai griezti switchai
+    Apejimas atliekamas, naudojant taip pat sita 
+    funkcija.'''
+    # PIRMA NUSTATOMA, KA APIEDINESIM
+    # KREIPIANTI I FUNKCIJA NURODOMA VIDUJE 
+    # SUPORUOTU REISKINIU ESANTI SYNTAKSE
+    METACHARS=texsyntax.SYNTAX[syntax]['metach']
+    pass
     
     
         
@@ -436,12 +588,8 @@ for fn in list_of_files:
         i=0
         try:
             while True:
-                print(textas[i],end='')
-                if check_matching_switches(i,textas,'\\iffalse'):
-                    print('<<',
-                          check_matching_switches(i,textas,'\\iffalse'),
-                          '>>',end='')
-                i+=1
+                k=do_the_right_thing(i,textas)
+                i+=k
         except EOSError:
             print("DARBAS BAIGTAS")
             failas.close()
