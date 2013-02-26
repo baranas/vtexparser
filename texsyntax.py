@@ -289,25 +289,7 @@ SWITCH={'\\it','\\tt','\\em'}
 #     COMMANDS[i]=None
 ######################################
     
-# VERB APIBREZIMAI
-# inline verbatimas
-# argumento skirtukai -- bet kokie simboliai
-VERB={'\\verb':'i'}
-# komandos turincios verbatiminius argumentus 
-# verbatiminiais argumentais vadinsime
-# visus argumentus, kuriu viduje keiciasi TeX sintakse
-# Jei pagrindinis argumentas V, jei opcionalus v, jei ne verb None
-VERB_CMD={'\\index':('V')}
-VERB_ENV={'Verbatim','verbatim'}          # \begin{Verbatim}[commentchar=!]
 
-COMMENT_CHAR={'%'}
-
-########## NEAISKU AR REIKES ##################
-# FIKCINE KOMANDA
-VERB_ARGS=VERB_CMD
-# KOL KAS KOMENTARO TIPO ARGUMENTAI SUTAMPA SU VERBATIMO
-VERB_ARGS.update(COMMENT_CMD)
-###############################################
 
 # KADA MESTI PARSE ERRORA
 BAISUS_PAKETAI={'fancyvrb','listings'}
