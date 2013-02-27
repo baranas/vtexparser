@@ -23,7 +23,7 @@ except:
 import texsyntax
 
               ######################################## 
-              #### PARSINIMO ERRORU APIBREZIMAI ######
+              #### PARSINIMO ERRORU APIBREZIMAI   ####
               ## tam, kad butu galima loginti visus ##
               ## netikusius parsinimo meginimus     ##
               
@@ -84,8 +84,6 @@ def context(poz,String,End=False,Range=50,Tag=False,Delim=False):
         else:
             return (String[poz-before:poz]+ltag+String[poz:End+1]+rtag\
                     +String[End+1:End+after])
-
-
 
                     ######################################## 
                     #### IPRASTOS PATIKROS IR PAPRASTI  #### 
@@ -379,6 +377,9 @@ def collect_enviroment_name(poz,String,syntax='T'):
         i+=1
     return i-poz, arg
 
+    ######################################## 
+    ### Aplinku uzdarymo patikros     ######
+    
 def check_matching_env(poz,String,env_pav,syntax='T'):
     '''Tikrinama ar esamas reiskinys, 
     yra enviromento uzdarymas ar dar vienas 
@@ -463,7 +464,7 @@ def check_mathcing_braces(poz,String,char='{',syntax='T'):
              # return ('left',1)
              return False
          else:
-             return (1,'right')
+             return 1, 'right'
 
 
 
@@ -486,23 +487,6 @@ def check_mathcing_braces(poz,String,char='{',syntax='T'):
 # SINTAKSE VIDUJE 
 
 
-def skip_text(poz,String,syntax='T',address=[0]):
-    '''Surenkamas visas tekstas, kuris
-    nera aktyvuotas aktyviais simboliais.'''
-    i=poz
-    while not metachar(i,String,syntax):
-        if EOS(i,String):
-            break
-        i+=1
-    return i-poz
-        
-# Apibreziami metodai, ir opcionaliai
-# tagai
-def collect_name_and_choose(poz,String,syntax):
-    '''Sutikus komanda aktyvuojanti symboli,
-    surenkamas komandos pavadinimas ir parenkamas
-    tolimesnis rinkimo algoritmas'''
-    pass
 
 def choose_checking(opening,syntax='T'):
     '''Parenka modos uzdarymo tikrinimo mechanizma!!!
@@ -526,8 +510,61 @@ def choose_checking(opening,syntax='T'):
              "nei tarp grieztu switchu:\n{}"\
              "\n".format(opening,BRACES),0)
 
+class Objektas():
+    '''Universalus objektas parsinime.'''
+    def __init__(self, tipas):
+        self.tipas=tipas
+        self.text=''
+        self.kids=[]
 
-def parse(String,syntax='T',opening=None,address=[0]):
+class Fruitfull(Objektas):
+    '''Objektas galintis tureti vaiku.'''
+    def __init__(self,tipas):
+        super().__init__(tipas)
+        self.kids=[]
+    
+def skip_text(poz,String,syntax,father):
+    '''Surenkamas visas tekstas, kuris
+    nera aktyvuotas aktyviais simboliais.'''
+    i=poz
+    while not metachar(i,String,syntax):
+        if EOS(i,String):
+            break
+        i+=1
+    textas=Objektas('plain_text')
+    textas.text=String[poz:i]
+    father.kids.append(textas)    
+    return i-poz
+
+def parse_icomment(poz,String,syntax,father):
+    "inicializuoja komentara"
+    k=skip_comment(poz,String,syntax)
+    icomment=Fruitfull('icomment')
+    icomment.text=String[poz:poz+k]
+    # print("komentaras:",String[poz:poz+k])
+    # print("sekantis_simbolis:",String[poz+k])
+    father.kids.append(icomment)
+    return k
+
+
+nr=0
+    
+def parse_braced(poz,String,syntax,father):
+    "Paduodama eilute uz skliausto pozicijos."
+    global nr
+    nr+=1
+    # print("\t"*nr,"PARSINU APSKLIAUSTA")
+    i=poz
+    braces=Fruitfull("braced")
+    k=parse(String[poz+1:],syntax,opening='{',father=braces)
+    # print("\t"*nr,String[poz:poz+k+1])
+    # print("\t"*nr,"SUPARSINAU APSKLIAUSTA")
+    braces.text=String[poz:poz+k+1]
+    father.kids.append(braces)
+    return k+1
+
+             
+def parse(String,syntax='T',opening=None,father=Fruitfull('MAIN')):
     '''Surinkinejamas teskstas iki tol, kol
     kol bus sutiktas esamos modos uzdarymo 
     reiskinys!'''
@@ -542,55 +579,32 @@ def parse(String,syntax='T',opening=None,address=[0]):
     nr=0
     while True:
         if EOS(i,String):
+            father.text=String
             print("PABAIGA")
             break
         try:
             if not metachar(i,String,syntax):
                 nr+=1
-                # print("\nSKIP_TEXT:",address)
-                # print("CHR:",String[i])
-                k=skip_text(i,String,syntax,address+[nr])
-                # print("SKIP_TEXT_END:")
+                k=skip_text(i,String,syntax,father)
                 i+=k
-                # print("CHR:",String[i],'\n')
                 continue
             else:
                 if checkas(i,String):
-                    return i+checkas(i,String)[1]
+                    return i+checkas(i,String)[0]
                 else:
                     nr+=1
-                    # print("\nDO_WHAT_IS_RIGHT:",address)
-                    # print("CHR:",String[i])
-                    k=do_the_right_thing(i,String,syntax,opening,address+[nr])
-                    i+=k
-                    # print("DONE:")
-                    # print("CHR:",String[i])
+                    k=do_the_right_thing(i,String,syntax,opening,father)
+                    i+=k[0]
                     continue
         except EOSError:
             print("\n\nPASIBAIGE!!!")
 
-def parse_braced(poz,String,syntax,Address):
-    "Paduodama eilute uz skliausto pozicijos."
-    # print("PARSINU APSKLIAUSTA")
-    i=poz
-    
-    if taginam:
-        print('{',end='')
-        
-    k=parse(String[poz+1:],syntax,opening='{',address=Address)
 
-    if taginam:
-        print('}',end='')
-    
-    return k+1
-
-
-
-METHODS={'icomment':[skip_comment,'comment'],
+METHODS={'icomment':[parse_icomment,'comment'],
          'tcommand':[collect_name_and_choose,'cmd_nm'],
          'mbraces':[parse_braced,'braces']}
 
-def do_the_right_thing(poz,String,syntax='T',opening='?',address=[0]):
+def do_the_right_thing(poz,String,syntax,opening=None,father=None):
     '''Jei esamas charas yra metacharas,
     apibreztoje syntakseje, iskviecia
     reikalinga algoritma. Ir grazina ilgi 
@@ -599,33 +613,33 @@ def do_the_right_thing(poz,String,syntax='T',opening='?',address=[0]):
     if metachar(poz,String,syntax):
         # PARENKAMAS METODAS
         method=METHODS[METACHARS[String[poz]]][0]
-        tipas=METHODS[METACHARS[String[poz]]][0]
-
-        if taginam:
-            print('<'+tipas+str(address)+'@->',end='')
-            
-        k=method(poz,String,syntax,address)
-
-        if taginam:
-            print('<-@'+tipas+str(address)+'>',end='')
-            
+        tipas=METHODS[METACHARS[String[poz]]][1]
+        k=method(poz,String,syntax,father)
         return k, tipas
     else:
-
-        if taginam:
-            print('<'+tipas+str(address)+'@->',end='')
-        k=skip_text(poz,String,syntax)
-        
+        k=skip_text(poz,String,syntax,father)        
         return k, tipas
                 
         
+textas='''aaaaaa {bbbbbb}  cccccc {{dddd {eeeee} ffffff}} %gggggg
+hhhhhhh %iiiiiii
+%kkkkkkkk         
+{pabaiga} '''
 
-textas='''aaaaaa {aaaaa}  bbbbbbbbbb {{ bbbbb {ddddd} eeee}} cccccc'''
 
 taginam=True
-parse(textas)
+print()
+TEVELIS=Fruitfull("TETIS")
+parse(textas,father=TEVELIS)
     
-    
+def prasuk_per_vaikus(Objektas,lygis):
+    if Objektas.kids:
+        for i in Objektas.kids:
+            print(("   "*(lygis+1))+'|'+str(lygis)+'|',i.text,'<--',i.tipas)
+            prasuk_per_vaikus(i,lygis+1)
+    else: pass
+        
+prasuk_per_vaikus(TEVELIS,0)    
 
 
 def skip_inline_verbatim(poz,String):
