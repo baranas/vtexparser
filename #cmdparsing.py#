@@ -462,7 +462,8 @@ def check_mathcing_braces(poz,String,char='{',syntax='T'):
     # Jei syntakseje yra galimybe, kad symbolis gali pasikartoti 2x kartu
     # tikrinam ar taip neatsitinka
     if 'rpt' in BRACES[char]:
-         
+        check= lambda i,String,syntax : check(i,String,syntax)\
+          and  
     if check(i,String,syntax):
          if String[poz]==char:
              # return ('left',1)
