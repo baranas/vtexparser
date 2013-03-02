@@ -1,7 +1,75 @@
 * Klaustukai
 1. Ar comment tipo aplinkose gali buti sintakses klaidu?
+2. patikrinti 
+ - \begin{comment} ... \\end{comment}
+ - \comment ... \endcomment
+ - \comment \comment \endcomment
+3. GILIAU PAANALIZUOTI SWITCH IR ENVIROMENT VIDINE STRUKTURA
+ - Ar syntakses priklauso nuo to, ar tai switchas ar enviromentass
+
  
 * Algoritmas
+** Parsinimo eiga
+Pagrindinis parsinimo procesas uzfiksuotas funkcijoje parse.
+Si funkcija: 
+1) tikrina ar esamas taskas nera parsinamo objekto
+   uzdarymo reiskinio pradzia
+2) jei ne (1), tai tikrina ar jis yra gilesnio objekto inicializacijos
+   pradzia
+
+** Skirtukai
+LaTeX'o scriptuose dazniausiai pasitaikantys objektai, 
+turintys atidarancius ir uzdarancius reiskinius:
+   |-------------------+--------------------+-------------------|
+   | tipas             | atidarymo pavyzdys | uzdarymo pavyzdys |
+   |-------------------+--------------------+-------------------|
+   | aktyvus symboliai | {                  | }                 |
+   |                   | $                  | $                 |
+   |                   | $$                 | $$                |
+   |-------------------+--------------------+-------------------|
+   | griezti switch    | \(                 | \)                |
+   | (komandos tipo    | \iffalse           | \fi               |
+   | jungikliai)       | \[                 | \]                |
+   |-------------------+--------------------+-------------------|
+   | enviromentai      | \begin{equation}   | \end{equation}    |
+   |                   | \begin{comment}    | \end{comment}     |
+   |                   | \begin{verbatim}   | \end{verbatim}    |
+   |-------------------+--------------------+-------------------|
+
+Kiekvieno is siu skirtuku turinys gali tureti savo individualia syntakse.
+Pavyzdziui:
+ * skirtukais $...$ apgaubtas reiskinys viduje tures matematine 
+   syntakse, kuri siek tiek skiriasi, nuo isorines tesktines
+   ($ reiskia matematines modos isjungima, _-subskripto pradzia,
+    ^-superskripto pradzia ir t.t.);
+ * turinyje apgaubtame \iffalse ... \fi, niekas neturi jokios reiksmes
+   iskyrus pacius \iffalse ir \fi. 
+
+** Parametrai
+Taip pat, kiekvienas reiskinys su savo syntakse (kuri vadinsime moda), 
+gali tureti tam tikrus nustatymus, kurie gali buti apibrezti:
+ - pries inicializuojant reiskini
+   * \tabcolsep=10pt ... \begin{tabular*}
+   * nutylint detales (pvz. \documentclass apibrezime) 
+ - inicializacijos metu: \begin{Verbatim}[commentchar=#]...\end{verbatim}
+ - po inicializacijos 
+   * pradzioje  \begin{table}\tablewith=10cms
+   * konteksto viduryje $ \frac{1}{2} \displaystyle \frac{1}{2} $
+  
+** Komandos
+Kiekvienas sutiktas '\' parsinimo eigoje reiškia komandos pavadinimo surinkima.
+Surinkus komandos pavadinimą yra žiųrimą į jau esamą pavadinimų erdvę (namespace) 
+ir nustatoma šios komandos reikšmė bei tipas. Parsinimo eigoje labai svarbu žinoti:
+ - ar komanda yra simbolis (\alpha, \textbullet, ...)
+ - ar tai yra komanda su argumentais, kurių surinkimui bus reikalingas
+   atskiras argumentu parsinimas  \textbf{...}
+ - ar tai yra tam tikro parametro pakeitimas (\tablewidth=10cm, \it, \tt, \em)
+ - ar tai yra enviromento pradzia, kurio turinys bus parsinamas atskirai
+ - ar tai yra grieztas jungtukas, kurio isjungimui bus reikalinga kita komanda \[...\]
+
+
+
+
 1. Pradedama parsinima:
     Tevelis=None
 2. Renkam viska kas nera metacharai iprastoje sintakseje ir

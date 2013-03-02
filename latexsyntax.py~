@@ -1,6 +1,9 @@
-'''Modulis kuriame aprasytos skirtinga sintaksine prasem turincios 
-komandos'''
+'''Modulis kuriame aprasyta iprasta latexo syntakse'''
 import string, os, sys
+
+################################################## 
+########## LaTeX'o IPRASTA SYNTAKSE ############## 
+
 
 #################### METACHARAI IR JU REIKSMES
 ##############################################
@@ -31,24 +34,28 @@ METACHARACTERS={'#','$','%','^','{','}','_','~','\\','&'}
 
 METACH={'text':{'$':'math',      # $->imath $$->dmath
                 '%':'icomment',
-                '{':'mbraces',
+                '{':'tbraces',
                 '~':'space',
                 '\\':'tcommand',
-                # sutikus atidaranti skliausta, bus sokam
-                # i chara uz uzdarancio
-                # sutikti uzdaranciu negalima
-                '}':'error',         
+                # algoritmas parasytas taip, kad parsinant
+                # neimanoma sutikti uzdaranciu reiskiniu
+                # kiekvienas atidarantis reiskinys
+                # inicijuoja nauja parsinimo procesa
+                '}':'error',
+                # aktyvus symboliai, kuriu negalima sutikti
+                # tekstineje busenoje
                 '#':'error',
                 '^':'error',
                 '_':'error',
                 '&':'error'},
-         'math':{'$':'end',
+         'math':{
                 '%':'icomment',
                 '{':'mbraces',
                 '~':'space',
                 '\\':'mcommand',
                 '^':'superscript',
                 '_':'subscript',
+                '$':'error',
                 '}':'error',         
                 '#':'error',
                 '&':'error'},
@@ -58,6 +65,9 @@ METACH={'text':{'$':'math',      # $->imath $$->dmath
          # -matematikos 
          # -metaskliaustu  ir t.t. 
          'verb':{'\\':'vcommand'},
+         # ineksuose syntakse visai sudirbta 
+         'index':{'{':'mbraces',
+                  '}':'error'},
          'tabular':{'$':'imath',
                 '%':'icomment',
                 '{':'mbraces',
@@ -83,8 +93,13 @@ METACH={'text':{'$':'math',      # $->imath $$->dmath
 # METACHARO ESKEIPAS
 # simbolis kuriam esant pries metachara,
 # metacharas igyja kita prasme
-# (numatant galimybe dinamiskai keisti)
+# PVZ: * labas \index{aaa\} vakras
+#        puikiai kompiliuojasi ir } nera eskapintas
+#      * \begin{verbatim} aaaaa \\end{verbatim} irgi puikiai kompiliuojasi
+#      * taciau \iffalse aaa \\fi --ne
+# 
 METACHAR_ESC={'\\':None}
+
      
 # EILUTES Whitespace'ai  
 WHITESPACE={' ','\t'}
@@ -114,31 +129,95 @@ COMMAND_CHARS.update('*')
 # * JEI KOMANDA YRA SYMBOLIS TAI PATERNAAS YRA NONE
 
 # TEKSTINES MODOS KOMANDOS
-T_COMMANDS={'\\usepackage':(0,1),
-          '\\rule':(0,1,1),
-          '\\footnote':(0,'T'),
-          '\\newcommand':(1,0,0,1),
-          '\\renewcommand':(1,0,0,1),
-          '\\def':(1,1),
-          '\\label':(1,),
-          '\\part':(0,'T'),
-          '\\chapter':(0,'T'),
-          '\\section':(0,'T'),
-          '\\subsection':(0,'T'),
-          '\\subsubsection':(0,'T'),
-          '\\paragraph':(0,'T'),
-          '\\subparagraph':(0,'T'),
-          '\\subsubparagraph':(0,'T'),
-          '\\subsubsubparagraph':(0,'T'),
-          '\\mbox':('T',),
-          '\\index':('V',),
-          '\\def':(1,1),
-          '\\textbackslash':None}
+T_COMMANDS={
+          '\\usepackage':{
+              'pattern':(0,1),
+              'type':'syntax'
+              },
+          '\\rule':{
+              'pattern':(0,1,1),
+              'type':'maketas'
+              },
+          '\\footnote':{
+              'pattern':(0,'T'),
+              'type':'footnote'
+              },
+          '\\newcommand':{
+              'pattern':(1,0,0,1),
+              'type':'syntax'
+              },
+          '\\renewcommand':{
+              'pattern':(1,0,0,1),
+              'type':'syntax'
+              },
+          '\\def':{
+              'pattern':(1,1),
+              'type':'syntax'
+              },
+          '\\label':{
+              'pattern':(1,),
+              'type':'label'
+              },
+          '\\part':{
+              'pattern':(0,'T'),
+              'type':'section'
+              },
+          '\\chapter':{
+              'pattern':(0,'T'),
+              'type':'section'
+              },
+          '\\section':{
+              'pattern':(0,'T'),
+              'type':'section'
+              },                  
+          '\\subsection':{
+              'pattern':(0,'T'),
+              'type':'section'
+              },
+          '\\subsubsection':{
+              'pattern':(0,'T'),
+              'type':'section'
+              },
+          '\\paragraph':{
+              'pattern':(0,'T'),
+              'type':'section'
+              },
+          '\\subparagraph':{
+              'pattern':(0,'T'),
+              'type':'section'
+              },
+          '\\subsubparagraph':{
+              'pattern':(0,'T'),
+              'type':'section'
+              },
+          '\\subsubsubparagraph':{
+              'pattern':(0,'T'),
+              'type':'section'
+              },
+          '\\mbox':{
+              'pattern':('T',),
+              'type':'text'
+              },
+          '\\index':{
+              'pattern':('V',),
+              'type':'index'
+              },
+          '\\textbackslash':{
+              'pattern':None,
+              'type':'tsymbol'}}
 
 # MATEMATINES MODOS KOMANDOS 
-M_COMMANDS={'\\frac':(1,1),
-            '\\alpha':None,
-            '\\mathbf':(1,)}
+M_COMMANDS={'\\frac':{
+               'pattern':(1,1),
+               'type':'fraction'
+               },
+            '\\alpha':{
+                'pattern':None,
+                'type':'msymbol'
+                },
+            '\\mathbf':{
+                'pattern':('M',),
+                'type':'mfont'}}
 
 # TABBULAR IR ARRAY atitinkamai naudosis tais paciais
 # T_COMMANDS ir M_COMMANDS komandu rinkiniais
@@ -153,7 +232,9 @@ M_COMMANDS={'\\frac':(1,1),
 # PALIEKAMA GALIMYBE PAPILDYTI
 # SUTIKTAS PAVYZDYS:
 # \def{\be}{\begin}
-ENV_SWITCH={'\\begin':'\\end'}
+ENV_SWITCH={'\\begin':{
+                      'closing':'\\end'
+                       }}
 
 ############### ENVIROMENTU PATERNAI IR TIPAI
 # PIRMAS ARGUMENTAS NURODO PATERNA
@@ -165,17 +246,30 @@ ENVIROMENTS={'equation':[(0,),'M'],
              'comment':[None,'V'],
              'listing':[None,'V']}
 
-SWITCHES={'\\iffalse':['\\fi','V'],
-          '\\comment':['\\endcomment','V'],
-          '$$':['$$','M'],                # display TeX trumpinys
-          '\(':['\)','M'],                # inline LaTeX trumpinys
-          '\[':['\]','M']}                # display LaTeX trumpinys
-
-############### KOMANDU ARGUMENTAI
-    
-
-# CHARAI KURIUOS SUTIKUS AISKU, KAD 
-
+SWITCHES={'\\iffalse':{
+               'closing':'\\fi',
+               'content':'V',
+               'type':'comment',
+               'properties':[]
+               },
+          '\\comment':{
+              'closing':'\\endcomment',
+              'content':'V',
+              'type':'comment',
+              'properties':[]
+              },
+          '\\(':{
+              'closing':'\\)',
+              'content':'M',
+              'type':'imath'
+              },
+          '\\[':{
+              'closing':'\\]',
+              'content':'M',
+              'type':'dmath',
+              'properties':[]
+              }}
+         
 
 ############### KOMENTARAI
 
@@ -185,21 +279,56 @@ SWITCHES={'\\iffalse':['\\fi','V'],
 COMMENT={'%':('\n',('w',))}
 
 
-############## SUPORUOTI REISKINIAI
-# opcijos: 
-# meta--butina tikrinti ar
-#     neeskeipintas
-# None -- vieno simbolio skirtukai
-# rpt -- butina patikrinti ar sekantis symbolis nera
-#        tas pats
-# mch -- sudarytas is daugiau, negu vieno charo
-DELIMS={'[':[']',None],
-        '(':[')',None],
-        '{':['}','meta'],
-        '``':["''",''],
-        '$':['$','meta','rpt'],}
+############## SKIRTUKAI
+######################################## 
+# 'closing' -- uzdarantis reiskinys
+# 'properties' -- savybes, kurias turi skirtukai:
+#     * 'meta' -- symbolis turi buti neeskeipintas
+#     * 'mch' -- symbolis gali tureti kita reiksme
+#             jei paskui ji eis tam tikra kombinacija
+#             butina tikrinti MULTICHAR_DELIMS ir perjungti 
+#             i kita rezima
+# 'content' -- kokios syntakses bus turinys gaubiamas siu 
+#             skirtuku
+#     * 'A' -- argumento atskirai apibrezta syntakse
+#     * 'O' -- (OUTER) isorinio reiskinio syntakse
+#     * 'M' -- matematine syntakse
+#     * ... -- ir visos kitos apibreztos syntakse
 
-MULTICHAR_DELIMS={'$$':['$$',None]}
+DELIMS={'[':{
+            'closing':'[',
+            'properties':[],
+            'content':'A'
+            },
+        '{':{
+            'closing':'}',
+            'properties':['meta'],
+            'content':'O'
+            },
+        '$':{
+            'closing':'$',
+            'properties':['meta','mch'],
+            'content':'M'
+            },
+        '`':{
+            'closing':"'",
+            'properties':['mch'],
+            'content':'O'}}
+
+
+
+
+############## DAUGELIO SYMBOLIU SKIRTUKAI 
+MULTICHAR_DELIMS={'$$':{
+                       'closing':'$$',
+                       'properties':['meta'],
+                       'content':'M'
+                       },
+                  '``':{
+                      'closing':"''",
+                      'properties':[],
+                      'content':'O'
+                       }}
 
 ARG_DELIMS={'{':['}','meta']}
 
@@ -252,12 +381,12 @@ SYNTAX={
     # end_w--reiskia: pasibaik 
     # ir surink trailing whitespace
     'C': {'metach':{'\n':'end_w'},
-          'commands':{}}}
+          'commands':{}},
+    'I': {'metach':METACH['index'],
+          'delims':
+              {'{':DELIMS['{']}}
+              }
 
-
-# Negriezti switchai: ju gyvavimo sritis
-# yra esama aplinka
-SWITCH={'\\it','\\tt','\\em'}
 
 
 # PAGRINDINIAI KOMANDU TIPAI 
