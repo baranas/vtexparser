@@ -34,7 +34,7 @@ METACHARACTERS={'#','$','%','^','{','}','_','~','\\','&'}
 
 METACH={'text':{'$':'math',      # $->imath $$->dmath
                 '%':'icomment',
-                '{':'tbraces',
+                '{':'mbraces',
                 '~':'space',
                 '\\':'tcommand',
                 # algoritmas parasytas taip, kad parsinant
@@ -332,9 +332,6 @@ DELIMS={'[':{
             'properties':['mch'],
             'content':'O'}}
 
-
-
-
 ############## DAUGELIO SYMBOLIU SKIRTUKAI 
 MULTICHAR_DELIMS={'$$':{
                        'closing':'$$',
@@ -385,10 +382,17 @@ SYNTAX={
     # MATEMATINES MODOS SINTAKSE
     'M': {'metach':METACH['math'],
           'cmd_chars':COMMAND_CHARS,
-          'escape':METACHAR_ESC,
           'cmd_start':START_OF_CMD,
+          'escape':METACHAR_ESC,
           'commands':T_COMMANDS,
-          'icomment':COMMENT},
+          'icomment':COMMENT,
+          'env_switch':ENV_SWITCH,
+          'enviroments':ENVIROMENTS,
+          'mbraces':ARG_DELIMS,
+          'delims':DELIMS,
+          'mch_delims':MULTICHAR_DELIMS,
+          'arg_beg':BEGIN_OF_ARG,
+          'switches':SWITCHES},
     # VERBATIMINES MODOS SYNTAKSE
     'V': {'metach':METACH['verb'],
           'cmd_chars':COMMAND_CHARS,

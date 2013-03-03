@@ -55,7 +55,7 @@ class AlgError(ParseError):
 
 def context(poz,String,End=False,Range=50,Tag=False,Delim=False):
     '''Grazina eilutes konteksta apie esama
-    charu seka, iskirdama chara.'''
+    symboli (symboliu seka).'''
     if Delim:
         delim=Delim
     else:
@@ -85,22 +85,56 @@ def context(poz,String,End=False,Range=50,Tag=False,Delim=False):
             return (String[poz-before:poz]+ltag+String[poz:End+1]+rtag\
                     +String[End+1:End+after])
 
-                    ######################################## 
-                    #### IPRASTOS PATIKROS IR PAPRASTI  #### 
-                    #### METODAI NAUDOJAMI PARSINIME    ####
+              ######################################## 
+              ####         PARSINIMO METU         ####
+              ##     INICIALIZUOJAMI OBJEKTAI       ##
+
+class ParseObject():
+    '''Universalus objektas parsinime.'''
+    def __init__(self,tipas):
+        self.tipas=tipas
+        self.text=''
+
+class FruitfullObject(ParseObject):
+    '''Objektas turinti vidine struktura,
+    sudaryta is kitu objektu.'''
+    def __init__(self,tipas):
+        super().__init__(tipas)
+        self.kids=[]
+
+              ######################################## 
+              ####      OBJEKTU KOMPONENTAI       ####
+
+class Opening:
+    '''Skirtukai atidanatys reiskini'''
+    def __init__(self,Tipas,Name,Body):
+        self.Type=Tipas
+        self.name=Name
+        self.body=Body
+
+class Closing(Opening):
+    def __init__(self,Tipas,Name,Body):
+        super().__init__(Tipas,Name,Body)
+
+              ######################################## 
+              ####   IPRASTI METODAI NAUDOJAMI    ####
+              ##         PARSINIMO PROCESE          ##
                     
 def escaped(poz,String,syntax='T'):
     '''Patikriname ar esamas charas 
-    nera escapintas.'''
-    # jei syntakseje neapibreztas escape charas
+    nera escapintas.
+    Parasyta, numatant escape charo
+    sintakses pasikeitimo galimybe.'''
+    # DEBUGING :: jei syntakseje neapibreztas escape charas
     try:
         ESC_CH=latexsyntax.SYNTAX[syntax]['escape']
     except KeyError:
         return False
+    # :::
     if poz==0: return False
     if not (String[poz-1] in ESC_CH.keys()):
         return False
-    # PATIKRINAME AR NEBUVO SINTAKSES KEITIMO
+    # DEBUGING :: PATIKRINAME AR NEBUVO SINTAKSES KEITIMO
     elif ESC_CH[String[poz-1]]:
         raise AlgError(
             "Pakeista escape charu sintakse "\
@@ -108,6 +142,7 @@ def escaped(poz,String,syntax='T'):
             "\n{}\nEscape charu sarasas"\
             ":\n{}".format(context(poz-1,String),
                            ESC_CH),poz-1)    
+    # :::
     else:
         # suskaiciuojam kiek yra 
         # vienas po kito einanciu backslashu
@@ -154,11 +189,13 @@ def EOS(poz,String):
 def skip_whitespace(poz,String,WHITES=latexsyntax.WHITESPACE):
     '''Praleidziam visus whitespace, kurie
     yra ne newline. 
-    Grazinam whitespacu sekos ilgi.'''
+    Grazinamas whitespacu sekos ilgis.'''
+    # DEBUGING :::
     if (not (String[poz] in WHITES)) or escaped(poz,String):
         raise AlgError(
             'Tai nera whitespaceas:"\
             "\n{}'.format(context(poz,String)),poz)
+    # ::: 
     i=poz
     while String[i] in WHITES:
         if EOS(i,String): 
@@ -168,28 +205,31 @@ def skip_whitespace(poz,String,WHITES=latexsyntax.WHITESPACE):
         i+=1
     return i-poz
 
+              ######################################## 
+              ####   INLINE KOMENTARU SURINKIMO   ####
+              ##            MECHANIZMAS             ##
 
-          ########################################### 
-          ###### INLINE KOMENTARU SURINKIMAI ########
-
-def is_start_of_comment(i,String,syntax='T'):
+def is_start_of_comment(i,String,syntax):
     '''Patikriname ar esamas charas yra 
-    inline komentaro pradzia. 
-    Jei taip grazina: 
-    (chara kuris isjungs komentara, opciju rinkini)'''
+    inline komentaro pradzia. Jei taip grazina: 
+    (chara kuris isjungs komentara, opciju rinkini).
+    Opciju rinkinys yra reikalingas tam, nes galima
+    perapibrezti komentara taip, kad sutikus isjungiamaji
+    symboli, nebus surinkti sekantys whitespace.
+    Taigi, raide 'w' nurodo, kad reikes surinkti whitespace.'''
     COMMENT=latexsyntax.SYNTAX[syntax]['icomment']
     if (String[i] in COMMENT.keys()) and metachar(i,String):
         return COMMENT[String[i]]
     else: return False
            
-def skip_comment(poz,String,syntax='T'):
+def skip_icomment(poz,String,syntax):
     '''Nuskaitomas komentaras ir grazinamas jo ilgis.
     Skaitoma tada, kai komentaro jungiklis yra metachar'''
     COMMENT=latexsyntax.SYNTAX[syntax]['icomment']
     if is_start_of_comment(poz,String,syntax):
         cstart=String[poz]
-        cend=is_start_of_comment(poz,String)[0]
-        cprop=is_start_of_comment(poz,String)[1]
+        cend=is_start_of_comment(poz,String,syntax)[0]
+        cprop=is_start_of_comment(poz,String,syntax)[1]
     else:
         raise AlgError('Tai nera komentaro "\
           "jungiklis!:\n{}'.format(context(poz,String)),poz)
@@ -220,18 +260,12 @@ def skip_comment(poz,String,syntax='T'):
                 # SURENKAMA KOMENTARU SEKA 
                 if String[i]==cstart: continue
                 else:
-                    
-                    if taginam:
-                        print(String[poz,i])
-
                     return i-poz
         else: return i-poz
 
-                
-
                 ################################################# 
-                ######  KELIONE IKI KOMANDOS ARGUMENTO %%%%%%%%%%
-                #### preliudija i komandu surinkimus         ####
+                ######    KELIONE IKI KOMANDOS ARGUMENTO ########
+                #### Preliudija i komandu surinkimus         ####
                 #### taciau pirma bus surenkami enviromentu  ####
                 #### pavadinimai                             ####
                 
@@ -283,14 +317,23 @@ def skip_command_name(poz,String,syntax='T'):
                            "try:\n".format(context(i,String),i))
         i+=1
     return i-poz
-       
+
+def is_strict_switch(poz,String,syntax='T'):
+    '''Patikrina ar esamas reiskinys yra atidarantis 
+    grieztas switchas. Jei taip grazina jo ilgi.'''
+    switches=latexsyntax.SYNTAX[syntax]['switches'].keys()
+    k=skip_command_name(poz,String,syntax)
+    if String[poz:poz+k] in switches:
+       return True
+    else: return False
+
 def skip_till_argument(poz,String,syntax='T'):
     '''Praleidzia visus, nereiksmingus
     charus iki sekancio argumento.
-    
     Tarp komandos ir argumento galimi tik 
     iprastiniai komentarai % ir whitespacai.
-    Taip pat, dar nepraidejus komentarui  1-as newline.'''
+    Taip pat, dar neprasidejus komentarui  
+    yra galimas 1-as newline.'''
     BEGIN_OF_ARG=latexsyntax.SYNTAX[syntax]['arg_beg']
     i=poz
     if String[poz] in BEGIN_OF_ARG:
@@ -368,7 +411,6 @@ def collect_enviroment_name(poz,String,syntax='T'):
     braces=[1,0]
     i+=1
     arg=''
-
     while braces[0]!=braces[1]:
         if String[i]==left: 
                 braces[0]+=1; i+=1
@@ -384,17 +426,16 @@ def collect_enviroment_name(poz,String,syntax='T'):
         i+=1
     return i-poz, arg
 
-    ######################################## 
-    ### Aplinku uzdarymo patikros     ######
+              ######################################## 
+              ####  APLINKU UZSIDARYMO TIKRINIMO  ####
+              ##            MECHANIZMAI             ##
+              #    Aptikus, nauja aplinka, reikia    #
+              # nustatyti, jos uzsidarymo mechanizma #
     
 def check_matching_env(poz,String,syntax,opening):
-    '''Tikrinama ar esamas reiskinys, 
-    yra enviromento uzdarymas ar dar vienas 
-    atidarantis reiskinys.
-    TABULIARE GALI BUTI TABULIARAS
-    TACIAU KOMENTE NEGALI BUTI KOMENTO
-    AR VERBATIME VERBATIMO
-    Grazina: ('left' arba 'right', reiskinio ilgi)'''
+    '''Tikrinama ar esamas reiskinys, yra 
+    enviromento uzdarymas. Opening -- nurodomas 
+    enviromento pavadinimas.'''
     if not is_start_of_cmd(poz,String,syntax):
         return False
     if is_end_of_env(poz,String,syntax):
@@ -402,15 +443,6 @@ def check_matching_env(poz,String,syntax,opening):
             return False
         else: 
             return collect_enviroment_name(poz,String,syntax)[0]
-
-def is_strict_switch(poz,String,syntax='T'):
-    '''Patikrina ar esamas reiskinys yra atidarantis 
-    grieztas switchas. Jei taip grazina jo ilgi.'''
-    switches=latexsyntax.SYNTAX[syntax]['switches'].keys()
-    k=skip_command_name(poz,String,syntax)
-    if String[poz:poz+k] in switches:
-       return True
-    else: return False
     
 def check_matching_switch(poz,String,syntax,switch):
     '''Tikrina ar esamas reiskinys yra griezto switcho 
@@ -469,10 +501,10 @@ def check_if_multichar(poz,String,syntax):
                          "\n{}".format(context(poz,String)),poz)
     char=String[poz]
     MULTICHAR=latexsyntax.SYNTAX[syntax]['delims'][char]['multichar']
-    if String[poz,poz+2] in MULTICHAR:
-        return True
+    if String[poz:poz+2] in MULTICHAR:
+        return String[poz:poz+2]
     else: 
-        return String[poz,poz+2]
+        return False
             
 def check_matching_multichar_delim(poz,String,syntax,opening):
     '''Sutikus  skirtuka, ar komanda, kuris turi opcija 'rpt' 
@@ -495,58 +527,33 @@ def check_matching_multichar_delim(poz,String,syntax,opening):
 
 def identify_opening(opening,syntax='T'):
     '''Parenka parsinamo reiskinio 
-    uzdarymo tikrinimo mechanizma!!!
-    Grazina funkcija, kuria bus tikrinama
-    ir skirtuko tipa!'''
+    uzdarymo mechanizma atpazystanti metoda.
+    Grazina funkcija, kuria bus tikrinama.'''
     DELIMS=latexsyntax.SYNTAX[syntax]['delims']
     MCH_DELIMS=latexsyntax.SYNTAX[syntax]['mch_delims']
     SWITCHES=latexsyntax.SYNTAX[syntax]['switches']
-    ENVIROMENTS=latexsyntax.SYNTAX[syntax]['enviroments']   
+    ENVIROMENTS=latexsyntax.SYNTAX[syntax]['enviroments']
     if opening in DELIMS.keys():
         return lambda poz, String:\
-           check_matching_delim(poz,String,syntax,opening)
+           check_matching_delim(poz,String,syntax,opening), 'delimeter'
     if opening in MCH_DELIMS.keys():
         return lambda poz, String:\
-           check_matching_multichar_delim(poz,String,syntax,opening)
+           check_matching_multichar_delim(poz,String,syntax,opening), 'multichar_delimeter'
     elif opening in ENVIROMENTS.keys():
         return lambda poz, String:\
-           check_matching_env(poz,String,syntax,opening)           
+           check_matching_env(poz,String,syntax,opening), 'enviroment'           
     elif opening in SWITCHES.keys():
         return lambda poz, String:\
-           check_matching_switch(poz,String,syntax,opening)
+           check_matching_switch(poz,String,syntax,opening), 'switch'
     else: 
         raise AlgError("Reiskinys, kurio uzdarymo ieskoma "\
              "yra neapibreztas."
              "\n{}".format(opening),0)
-
-check=identify_opening('verbatim','T')
-             
-        
-testas='''aa \\begin{verbatim} aaaaaaaaaa{ } $ }   $ \\end    
-%%%%%%%%%%%%
-{verbatim}   \\fi $$   \\end{verbatim}    \\end {equation}  $}'''
-
-
-
-for i,char in enumerate(testas):
-    if check(i,testas):
-        print('(uzdaro)-->',end='')
-    print(char,end='')
-        
-        ############################## 
-        
-class ParseObject():
-    '''Universalus objektas parsinime.'''
-    def __init__(self,tipas):
-        self.tipas=tipas
-        self.text=''
-
-class FruitfullObject(ParseObject):
-    '''Objektas galintis tureti vaiku.'''
-    def __init__(self,tipas):
-        super().__init__(tipas)
-        self.kids=[]
     
+              ######################################## 
+              ####  PAPRASTOS STRUKTUROS OBJEKTU  ####
+              ##       SURINKIMO  MECHANIZMAI       ##
+            
 def skip_text(poz,String,syntax):
     '''Surenkamas visas tekstas, kuris
     nera aktyvuotas aktyviais simboliais.'''
@@ -555,56 +562,27 @@ def skip_text(poz,String,syntax):
         if EOS(i,String):
             break
         i+=1
-    textas=Objektas('plain_text')
-    textas.text=String[poz:i]
-    father.kids.append(textas)    
     return i-poz
 
 def parse_icomment(poz,String,syntax):
     "inicializuoja komentara"
-    k=skip_comment(poz,String,syntax)
-    icomment=Fruitfull('icomment')
-    icomment.text=String[poz:poz+k]
-    # print("komentaras:",String[poz:poz+k])
-    # print("sekantis_simbolis:",String[poz+k])
-    father.kids.append(icomment)
+    k=skip_icomment(poz,String,syntax)
     return k
-             
-def parse(String, syntax='T', checking=None, father=FruitfullObject('MAIN'), address=[]):
-    '''Parsinimo eiga:
-    * Tikrinama ar neuzsibaige esamas reiskinys
-      - pasibaigus grazinamas vidinio reiskinio ilgis ir 
-      - uzdaramcio skirtuko ilgis
-    * Tikrinama ar neprasidejo naujas gilesnis reiskinys
-      - gilesnio reiskinio parsinimui iskvieciamas 
-        papildomas algoritmas, nustatinejantis kokio 
-        objekto parsinima pradeti (metodas do_the_right_thing)
-      - viskas, kas nera esamo reiskinio uzbaigimo
-        skirtukas, yra kitas reiskinys.
-      - kito reiskinio turinys gali buti ir neparsinamas,
-        o tiesiog surenkamas (icomment,text,symbol ir t.t.)
 
-    Grazinamas suparsinto teksto ilgis.'''
-    # jei esamas reiskinys yra gilesnis
-    if checking:
-        checkas=checking
-    else:
-        checkas=lambda x,y: False
-    elem=0
-    while True:
-        if EOS(i,String):
-            father.fulltext=String
-            print("PARSINIMO PABAIGA",address)
-            break
-        try:
-            if checkas(i,String):
-                return i, checkas(i,String)[0]
-            else:
-                do_the_right_thing(poz,String,syntax,father,address,elem)
-                elem+=1
-        except EOSError:
-            print("Pasibaige nebaigus")
+           ############################################### 
+             ######       PARSINIMO PROCESAS      #####
+                #################################### 
+                    ############################ 
 
+              ######################################## 
+              ####  PARSINIMO METODAI IR JU TIPAI ####
+              #   Kiekvienoje syntakseje, aktyvus    #
+              #    symboliai siejasi su metodais,    #
+              #   Kiekvienas metodas turi savo tipa, #
+              # i kuri atsizvelgus iskvieciamas atit-#
+              # kamas algoritmas ir sukuriamas ati-  #
+              # tinkamas objektas                    #
+              
 METHODS={
     # metodus sarase yra irasyti triju tipu objektai
     # simple_strc -- do_the_right_thing aptikes toki
@@ -624,7 +602,7 @@ METHODS={
         'type':'braced'
         },
     'math':{
-        'parse_type':'inner_pars',
+        'parse_type':'inner_parse',
         'syntax':'M',
         'opening':'multichar',
         'type':'math'
@@ -632,51 +610,110 @@ METHODS={
     'switch':{
         'parse_type':'inner_parse'
         }}
-        
+
+def parse(String, syntax='T', checking=None, father=FruitfullObject('MAIN'), address=[]):
+    '''Parsinimo eiga:
+    * Tikrinama ar neuzsibaige esamas reiskinys
+      - pasibaigus grazinamas vidinio reiskinio ilgis ir 
+      - uzdaramcio skirtuko ilgis
+    * Tikrinama ar neprasidejo naujas gilesnis reiskinys
+      - gilesnio reiskinio parsinimui iskvieciamas 
+        papildomas algoritmas, nustatinejantis kokio 
+        objekto parsinima pradeti (metodas do_the_right_thing)
+      - viskas, kas nera esamo reiskinio uzbaigimo
+        skirtukas, yra kitas reiskinys.
+      - kito reiskinio turinys gali buti ir neparsinamas,
+        o tiesiog surenkamas (icomment,text,symbol ir t.t.)
+    Grazinamas suparsinto teksto ilgis.'''
+    # jei esamas reiskinys yra gilesnis
+    if checking:
+        checkas=checking
+    else:
+        checkas=lambda x,y: False
+    elem=0
+    i=0
+    while True:
+        if EOS(i,String):
+            father.fulltext=String
+            print("PARSINIMO PABAIGA",address)
+            return father
+        try:
+            if checkas(i,String):
+                # grazinami objekto ir isjungiklio ilgiai
+                return i, checkas(i,String)
+            else:
+                # kito objekto kurimui perduodamas esamas adresas
+                k=do_the_right_thing(i,String,syntax,father,address,elem)
+                elem+=1
+                i+=k
+        except EOSError:
+            print("Pasibaige nebaigus")
+          
 def do_the_right_thing(poz,String,syntax,father,address,elem):
     '''Jei esamas charas yra metacharas,
     apibreztoje syntakseje, kreipiasi i kita
     algoritma, kuris priklausomai nuo esamo,
     konteksto ir metacharui priskirtos reiksmes 
     grazina parsinimo metoda, tipa'''
+    print("TIRIAMAS CHARAS",'>>'+String[poz]+'<<')
+    new_address=address+[elem]
+    print("Busimo elemento adresas",new_address)
     METACHARS=latexsyntax.SYNTAX[syntax]['metach']
     # jei esamas symbolis yra metacharas esamoje syntakseje
     if metachar(poz,String,syntax):
-        char=String_poz
+        char=String[poz]
         # istraukiamas metodo pavadinimas susijes su metacharu
         method=latexsyntax.SYNTAX[syntax]['metach'][char]
+        print("Su charu sisijes metodas",method)
         # is metodo istraukiamas busimo objekto parsinimo tipas 
         parse_type=METHODS[method]['parse_type']
-        # jei tai yra struktura, kurios turini reikes parsinti
-        if pars_type=='inner_parse':
+        ############################## 
+        ### jei tai yra struktura, kurios turini reikes parsinti
+        if parse_type=='inner_parse':
             opening=METHODS[method]['opening']
             # jei atidarantis reiskinys turi ir kitokiu kombinaciuju 
             if opening=='multichar':
-                if check_if_multichar(poz,String):
-                    delim=check_if_multichar(poz,String)
-        
+                if check_if_multichar(poz,String,syntax):
+                    delim=check_if_multichar(poz,String,syntax)
+                else: 
+                    delim=String[poz]
+            else: delim=String[poz]
+            # Nustatome syntakse
+            inner_syntax=METHODS[method]['syntax']
+            # jei vidine syntakse lygi isorinei
+            if inner_syntax == 'O':
+                inner_syntax=syntax
+            # ISKVIEVIAMAS METODAS PARSINANTIS ISSKIRTA REISKINI,
+            # PERDUODAMAS ISORINIO REISKINIO ADRESAS, 
+            # ATIDARANCIO SKIRTUKO ILGIS
+            # VIDINIO REISKINIO NUMATOMA SINTAKSE
+            Object=parse_wraped(poz,String,inner_syntax,delim,len(delim),new_address)
+            father.kids.append(Object)
+            return Object.lenght
+        ##############################
+        ### jei tai struktura, kurios turinys paprastai surenkamas
+        elif parse_type=='simple_str':
+            Method=METHODS[method]['method']
+            Type=METHODS[method]['type']
+            k=Method(poz,String,syntax)
+            Object=ParseObject(Type)
+            Object.body=String[poz:poz+k]
+            Object.lenght=k
+            Object.address=new_address
+            print("SUKURTAS PAPRASTOS STRUKTUROS OBJEKTAS:",'>>'+Object.body+'<<')
+            father.kids.append(Object)
+            return Object.lenght
     else:
         k=skip_text(poz,String,syntax)
-        kid_object=ParseObject("text")
-        kid_object.body=String[poz:poz+k]
-        father.kids.append[kid_object]
-        return k
+        Object=ParseObject("text")
+        Object.body=String[poz:poz+k]
+        Object.lenght=k
+        Object.address=new_address
+        father.kids.append(Object)
+        print("SUKURTAS TEKSTO OBJEKTAS:",'>>'+Object.body+'<<')
+        return Object.lenght
 
-class Opening:
-    '''Skirtukai atidanatys reiskini'''
-    def __init__(self,Tipas,Name,Body):
-        self.Type=Tipas
-        self.name=Name
-        self.body=Body
-
-class Closing(Opening):
-    def __init__(self,Tipas,Name,Body):
-        super().__init__(Tipas,Name,Body)
-        
-             
-
-    
-def parse_wraped(poz,String,syntax,opening,len):
+def parse_wraped(poz,String,syntax,opening,len,address):
     '''Paduodamas atidarancio skirtuko pavadinimas ir 
     jo ilgis skriptiniame faile.
     
@@ -685,38 +722,44 @@ def parse_wraped(poz,String,syntax,opening,len):
     jo pavadinima be jokiu aktyviu charu ir nuskaityta 
     ilgi skriptiniame faile.
     Grazinamas objektas su visa vidine struktura!'''
+    print("\nParsinu_apgaubta:",String[poz:])
+    print("Atidarantis_reiskinys:",opening)
+    print("Apgaubto elemento adresas",address)
     # Sukuriamas objektas, galintis tureti vaiku
-    Object=Fruitfull('wraped')
+    Object=FruitfullObject('wraped')
     # Patikrinama, kas per atidarantis reiskinys
     # gaunamas tikrinimo mechanizmas ir tipas
     check, Type = identify_opening(opening, syntax)
+    print("Reiskinio tipas",Type)
     # Sukuriamas atidarancio reiskinio objektas
     # Ir pridedamas prie esamo objekto
     Object.opening=Opening(Type,opening,String[poz:poz+len])
-    k, closing_len = parse(String[poz:],syntax,check,Object,address)
-    Object.closing=Closing(Type,opening,String[poz+k:poz+k+closing_len])
+    k, closing_len = parse(String[poz+len:],syntax,check,Object,address)
+    print("Vidinio reiskinio ilgis:",k)
+    print("Vidinis_reiskinys:",'>>'+String[poz+len:poz+len+k]+'<<')
+    print("Uzdarantis reiskinys:",String[poz+len+k:poz+len+k+closing_len])
+    # print("apgaubtas_baigesi:",String[poz+k+closing_len:])
+    Object.closing=Closing(Type,opening,String[poz+len+k:poz+len+k+closing_len])
     Object.lenght=len+k+closing_len
+    Object.address=address
+    Object.body=String[poz+len:poz+len+k]
     return Object
+
+
+test=''' { apacia  { $cia mtm$  { ir t.t  {   $ { kalno virsus  } $ }}}} $$ {a+b}{c+d} $$ $ x+y$  '''
+
+objektas=parse(test,'T')
+
+def prasuk_objekta(objektas):
+    for i in objektas.kids:
+        if type(i)==FruitfullObject:
+            print('   '*len(i.address), i.opening.body)
+            prasuk_objekta(i)
+            print('   '*len(i.address), i.closing.body)
+        else:
+            print('   '*len(i.address),'['+i.tipas+':'+i.body+']')
     
-
-    
-
-
-
-# taginam=True
-# print()
-# TEVELIS=Fruitfull("TETIS")
-# parse(textas,father=TEVELIS)
-    
-# def prasuk_per_vaikus(Objektas,lygis):
-#     if Objektas.kids:
-#         for i in Objektas.kids:
-#             print(("   "*(lygis+1))+'|'+str(lygis)+'|',i.text,'<--',i.tipas)
-#             prasuk_per_vaikus(i,lygis+1)
-#     else: pass
-        
-# prasuk_per_vaikus(TEVELIS,0)    
-
+prasuk_objekta(objektas)
 
 def skip_inline_verbatim(poz,String):
     '''Verbatimine aplinka neturi aktyviu charu
@@ -738,9 +781,7 @@ def skip_inline_verbatim(poz,String):
                          "{}".format(context(poz,String),poz),poz)
     i+=1
     return i-poz
-    
-
-         
+           
 def find_match(poz,String,syntax='T'):
     '''IESKOMA SUPORUOTO REISKINIO, 
     ATITINKAMAI KVIECIANT SITA PACIA 
@@ -756,33 +797,6 @@ def find_match(poz,String,syntax='T'):
     METACHARS=latexsyntax.SYNTAX[syntax]['metach']
     pass
     
-    
-        
-
-            
-# ######################################## 
-# ########################################     
-# test_dir=os.path.join(os.path.curdir,'test/')
-# list_of_files=os.listdir(test_dir)
-# list_of_files=[os.path.join(test_dir,a) for a in list_of_files]
-# print()
-# for fn in list_of_files:
-#     if fn[-10:]!='testas.tex': continue
-#     with open(fn,'rt',encoding="ascii") as failas:
-#         textas=failas.read()
-#         i=0
-#         try:
-#             while True:
-#                 k=do_the_right_thing(i,textas)
-#                 i+=k
-#         except EOSError:
-#             print("DARBAS BAIGTAS")
-#             failas.close()
-#         except IndexError:
-#             print("DARBAS BAIGTAS")
-#             failas.close()
-
-
 def skip_braced(poz,String,
                 meta=True,
                 verb=False,
