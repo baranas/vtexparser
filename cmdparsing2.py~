@@ -714,8 +714,6 @@ def do_the_right_thing(poz,String,syntax,father,address,elem):
                 switch=String[poz:poz+k]
                 inner_syntax=latexsyntax.SYNTAX[syntax]['switches']\
                   [switch]['content']
-                if inner_syntax == 'O':
-                    inner_syntax=syntax
                 Object=parse_wraped(poz,String,inner_syntax,switch,
                                     len(switch),new_address)
                 father.kids.append(Object)
@@ -725,12 +723,8 @@ def do_the_right_thing(poz,String,syntax,father,address,elem):
                 opening=String[poz:poz+lenght]
                 inner_syntax=latexsyntax.SYNTAX[syntax]['enviroments']\
                   [name]['content']
-                if inner_syntax == 'O':
-                    inner_syntax=syntax
                 Object=parse_wraped(poz,String,inner_syntax,name,
                                     lenght,new_address)
-                Object.opening.body='\\begin{'+name+'}'
-                Object.closing.body='\\end{'+name+'}'
                 father.kids.append(Object)
                 return Object.lenght             
         elif parse_type=='vcommand':
@@ -803,20 +797,12 @@ def parse_wraped(poz,String,syntax,opening,len,address):
     return Object
 
 
-test=''' { \\begin{equation}
-    \\[ apacia \\]  pries 
-    \\iffalse {sito \\[nereikia\\] $parsinti$ } \\fi 
-     po 
-     \\end
-     %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-     {equation}  
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-     { $cia mtm$  { ir t.t  {   $ { kalno virsus  } $ }}}} $$ {a+b}{c+d} $$ $ x+y$ \\begin   
+test=''' { \\begin{equation}\\[ apacia \\]  pries \\iffalse {sito \\[nereikia\\] $parsinti$ } \\fi  po \\end{equation}  { $cia mtm$  { ir t.t  {   $ { kalno virsus  } $ }}}} $$ {a+b}{c+d} $$ $ x+y$ \\begin   
     {equation}  aaa \\begin%    
-    {verbatim}   bbb \\end {verbatim}  aaaa  \\end{equation}   
+    {verbatim}   bbb \\end {verbatim}  aaaa
      '''
 
-objektas=parse(test,'T')
+#objektas=parse(test,'T')
 
 def prasuk_objekta(objektas):
     for i in objektas.kids:
@@ -827,7 +813,7 @@ def prasuk_objekta(objektas):
         else:
             print('   '*len(i.address),'['+i.tipas+':'+i.body+']')
     
-prasuk_objekta(objektas)
+# prasuk_objekta(objektas)
 
 def skip_inline_verbatim(poz,String):
     '''Verbatimine aplinka neturi aktyviu charu

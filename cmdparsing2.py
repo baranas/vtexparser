@@ -803,15 +803,7 @@ def parse_wraped(poz,String,syntax,opening,len,address):
     return Object
 
 
-test=''' { \\begin{equation}
-    \\[ apacia \\]  pries 
-    \\iffalse {sito \\[nereikia\\] $parsinti$ } \\fi 
-     po 
-     \\end
-     %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-     {equation}  
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-     { $cia mtm$  { ir t.t  {   $ { kalno virsus  } $ }}}} $$ {a+b}{c+d} $$ $ x+y$ \\begin   
+test=''' { \\begin{equation}\\[ apacia \\]  pries \\iffalse {sito \\[nereikia\\] $parsinti$ } \\fi  po \\end{equation}  { $cia mtm$  { ir t.t  {   $ { kalno virsus  } $ }}}} $$ {a+b}{c+d} $$ $ x+y$ \\begin   
     {equation}  aaa \\begin%    
     {verbatim}   bbb \\end {verbatim}  aaaa  \\end{equation}   
      '''

@@ -252,7 +252,8 @@ ENVIROMENTS={'equation':{
                  },
              'verbatim':{
                  'pattern':None,
-                 'syntax':'V'
+                 'syntax':'V',
+                 'content':'M'
                  },
              'comment':{
                  'pattern':None,
@@ -397,7 +398,16 @@ SYNTAX={
     'V': {'metach':METACH['verb'],
           'cmd_chars':COMMAND_CHARS,
           'cmd_start':START_OF_CMD,
-          'commands':{}},
+          'escape':METACHAR_ESC,
+          'commands':T_COMMANDS,
+          'icomment':{},
+          'env_switch':ENV_SWITCH,
+          'enviroments':{},
+          'mbraces':{},
+          'delims':{},
+          'mch_delims':{},
+          'arg_beg':{},
+          'switches':SWITCHES},
     # INLINE COMMENTARU SYNTAKSE
     # end_w--reiskia: pasibaik 
     # ir surink trailing whitespace
