@@ -92,8 +92,8 @@ def context(poz,String,End=False,Range=50,Tag=False,Delim=False):
 class ParseObject():
     '''Universalus objektas parsinime.'''
     def __init__(self,tipas):
-        self.tipas=tipas
-        self.text=''
+        self.body=''                      # skriptinio pavidalo kunas
+        self.Type=tipas
 
 class FruitfullObject(ParseObject):
     '''Objektas turinti vidine struktura,
@@ -569,6 +569,214 @@ def parse_icomment(poz,String,syntax):
     k=skip_icomment(poz,String,syntax)
     return k
 
+              ######################################## 
+              ####            KOMANDU             ####
+              ##       SURINKIMO  MECHANIZMAI       ##
+
+class Argument(ParseObject):
+    '''Argumento objektas, savyje talpinantis
+    argumento reiskini be skirtuku.'''
+    def __init__(self,syntax):
+        self.body=''
+        self.syntax=syntax
+
+class FruitfullArgument(Argument):
+    '''Argumentas turintis vidine struktura.'''
+    def __init__(self,body,syntax):
+        super.__init__(body,syntax)
+        self.kids=[]
+
+class Command(ParseObject):
+    '''Komanda su argumentais.
+    syntax--sintakse kurioje inicializuota komanda
+    name--komandos scriptine reprezentacija'''
+    def __init__(self,tipas,name,syntax,address):
+        self.Type=tipas
+        self.name=name
+        self.syntax=syntax
+        self.address=address
+        self.args=[]
+        
+
+def collect_argument(poz,String,syntax,new_address,command):
+    '''Surenka argumenta priklausomai nuo to, 
+    koks jo tipas. Sis metodas pats atpazysta argumento tipa,
+    istirdamas pirmaji argumento symboli.
+    Grazina argumento objekta. 
+    Argumentui sukuriamas atskiras adresas.'''
+    print("Pradedamas surinkineti argumentas")
+    print("Esamas charas",String[poz])
+    # symboliai, kurie gali buti argumento pradzios
+    arg_beg=latexsyntax.SYNTAX[syntax]['arg_beg']
+    if not (String[poz] in arg_beg):
+        raise ParseError("Cia turetu buti argumento pradzia, "\
+                         "taciau symbolis neatitinka argumento"\
+                         "pradzios apibrezimo:{}\n"\
+                         "{}".format(arg_beg,context(poz,String)),poz)
+    braces=latexsyntax.SYNTAX[syntax]['mbraces']
+    if String[poz] in braces.keys():
+        print("Sis argumentas turi vidine struktura")
+        Object=parse_wraped(poz,String,syntax,String[poz],1,
+                                new_address)
+        return Object
+    cmd_start=latexsyntax.SYNTAX[syntax]['cmd_start']
+    if String[poz] in cmd_start.keys():
+        print("Sis argumentas yra komandos tipo")
+        k=skip_command_name(poz,String,syntax)
+        Argumentas=Argument(syntax)
+        Argumentas.body=String[poz:poz+k]
+        Argumentas.address=new_address
+        return Argumentas
+    else:
+        print("Sis argumentas yra tiesiog symbolis")
+        Argumentas=Argument(syntax)
+        Argumentas.body=String[poz]
+        Argumentas.address=new_address
+        return Argumentas
+
+def skip_braced(poz,String,
+                meta=True,
+                verb=False,
+                COMMENT_SYNTAX=latexsyntax.COMMENT,
+                METACHARACTERS=latexsyntax.METACHARACTERS):
+        '''Grazina apskliausto reiskinio ilgi.
+        Jei meta=True, tai renka tik aktyvius skliaustus,
+        jei ne tai ieskos esamo skliausto poros.
+
+        Jei verb==True, tai is sintakses bus trumpam ismesti 
+        komentaro charai ir tarp skliaustu esancius % traktuos 
+        kaip simbolius.'''
+        if len(COMMENT_SYNTAX)!=1:
+            raise AlgError(
+                "Komentaro sintakses apibrezime yra daugiau"\
+                "negu vienas simbolis:\n"\
+                "{}\n{}".format(COMMENT_SYNTAX,context(i,String)),i)           
+        COMMENT_SYNTAX=latexsyntax.COMMENT
+        if meta:
+            DELIMETERS=latexsyntax.ARG_DELIMS
+        else:
+            DELIMETERS=latexsyntax.BRACES
+        # jei apskliaustas reiskinys yra
+        # verbatimine aplinka, ir procento zenklas nereiskia 
+        # komentaro pradzios
+        if verb:
+            del COMMENT_SYNTAX['%']
+        i=poz
+        char=String[poz]
+        if (char in latexsyntax.DELIMETERS.keys()) and metachar(poz,String):
+            left=String[poz]
+            right=latexsyntax.ARG_DELIMS[left]
+        else:
+            raise AlgError("Tai nera argumento skirtukas:"\
+                           "\n{}".format(context(i,String)),i)
+        if EOS(i,String):
+            raise EOSError(
+                "Tekstas baigiasi, ten kur "\
+                "turetu buti skliaudziamas argumentas!".format(
+                    context(i,String)),i)
+        i+=1
+        braces=[1,0]
+        while not braces[0]==braces[1]:
+            if String[i] in COMMENT_SYNTAX.keys() and metachar(i,String):
+                try:
+                    i+=skip_comment(i,String)
+                except EOSError:
+                    raise MatchError(
+                        'Nerasta skliausto pora!:\n{}'.format(
+                            context(poz,String)),poz)
+            if (String[i] in (left+right)) and metachar(i,String):
+                if String[i]==left: 
+                    braces[0]+=1
+                elif String[i]==right:
+                    braces[1]+=1
+            if braces[0]==braces[1]: break
+            if  EOS(i,String):
+                raise MatchError(
+                    'Nerasta skliausto pora!:\n{}'.format(
+                        context(poz,String)),poz)
+            i+=1
+        return i-poz+1
+                  
+def collect_command(poz,String,syntax,pattern,Type,father,address):
+    '''Surenka komanda, su jos argumentais, jei komandos
+    argumentas yra verb tipo tai netikriname, komentaru buvimo
+    ir pasiimame iki uzdarancio skliausto.
+    Grazinamas komandos tipo objektas!'''
+    print("\n\nPradedu komandos surinkima")
+    komanda=''
+    elem=0
+    args=[]
+    i=poz
+    ilg=skip_command_name(poz,String,syntax)
+    Komandos_pav=String[i:i+ilg]
+    i+=ilg
+    print('Pradedu komandos su zinomu paternu surinkima')
+    print("KOMANDA:",komanda)
+    print("POZICIJA:", context(i,String))
+    print("Patternas:",pattern)
+    # susirenkam zvaigzdute
+    # ji atsiskiria nuo komandos kaip ir argumentas
+    if komanda[-1:]!='*':
+        ilg=skip_till_argument(i,String)
+        if String[i+ilg]=='*':
+            Komandos_pav=Komandos_pav+'*'
+            i+=ilg+1
+            print("surinkau komanda su zvaigzdute\n"\
+            "dabartine mano pozicija:{}".format(
+                context(i,String)))
+            print("KOMANDA_SU_ZV:",Komandos_pav)
+        else:
+            pass
+    command=Command(Type,Komandos_pav,syntax,address)
+    print("Pradedu rinkti argumentus:\n",context(i,String)) 
+    print("Komandos_Paternas:",pattern)
+    if not pattern:
+        args=None
+    else:
+        print("Si komanda turi paterna!!!")
+        print("ESAME:",context(i,String))
+        for nr,k in enumerate(pattern):
+            # jei argumentas pagrindinis
+            if k.isupper() or k!=0:
+                # jei argumento syntakse nenurodyta
+                if k.isdigit():
+                    inner_syntax=syntax
+                else :
+                    inner_syntax=k
+                print("ieskom pagrindinio argumento:\n",
+                      context(i,String))
+                ilg=skip_till_argument(i,String,syntax)
+                i+=ilg
+                print("pagrindinio argumento pradzia:\n",
+                      context(i,String))
+                new_address=address.append(elem)
+                elem+=1
+                argument=collect_argument(i,String,inner_syntax,
+                                          new_address,command)
+                command.args.append(String[i:i+ilg])
+                i+=ilg
+            # jei argumentas opcionalus 
+            else:
+                print("Pradedamas surinkineti opcionalus argumentas")
+                ilg=skip_till_argument(i,String)
+                if String[i+ilg]=='[':
+                    print("Rastas opcionalus argumentas")
+                    print("opcionalus:",context(i,String))
+                    i+=ilg
+                    k=skip_braced(i,String,left='[',right=']')
+                    new_address=address.append(elem)
+                    elem+=1
+                    argument=Argument(syntax)
+                    argument.body=String[i:i+k]
+                    argument.address=new_address
+                    i+=k
+                else:
+                    args.append(None)
+                    pass
+
+    father.kids.append(command)
+    return command, i
+    
            ############################################### 
              ######       PARSINIMO PROCESAS      #####
                 #################################### 
@@ -658,134 +866,15 @@ def parse(String, syntax='T', checking=None, father=FruitfullObject('MAIN'),
         except EOSError:
             print("Pasibaige nebaigus")
 
-class Argument(ParseObject):
-    '''Argumento objektas, savyje talpinantis
-    argumento reiskini be skirtuku.'''
-    def __init__(self,body,syntax):
-        self.body=body
-        self.syntax=syntax
-        self.lenght=len(body)
-
-class FruitfullArgument(Argument):
-    '''Argumentas turintis vidine struktura.'''
-    def __init__(self,body,syntax):
-        super.__init__(body,syntax)
-        self.kids=[]
-
-class Command(ParseObject):
-    '''Komanda su argumentais'''
-        
-def collect_argument(poz,String,syntax,new_address):
-    '''Surenka argumenta priklausomai
-    nuo to koks jo tipas. Sis metodas
-    pats atpazysta argumento tipa.
-    Grazina argumento objekta
-    Argumentui sukuriamas atskiras adresas.'''
-    print("Pradedamas surinkineti argumentas")
-    print("Esamas charas",String[poz])
-    # symboliai, kurie gali buti argumento pradzios
-    arg_beg=latexsyntax.SYNTAX[syntax]['arg_beg']
-    if not (String[poz] in arg_beg):
-        raise ParseError("Cia turetu buti argumento pradzia, "\
-                         "taciau symbolis neatitinka argumento"\
-                         "pradzios apibrezimo:{}\n"\
-                         "{}".format(arg_beg,context(poz,String)),poz)
-    braces=latexsyntax.SYNTAX[syntax]['mbraces']
-    if String[poz] in braces.keys():
-        print("Sis argumentas turi vidine struktura")
-        Object=parse_wraped(poz,String,syntax,String[poz],1,
-                                new_address)
-        return Object
-    cmd_start=latexsyntax.SYNTAX[syntax]['cmd_start']
-    if String[poz] in cmd_start.keys():
-        print("Sis argumentas yra komandos tipo")
-        k=skip_command_name(poz,String,syntax)
-        Argumentas=Argument(String[poz:poz+k],syntax)
-        Argumentas.address=new_address
-        return Argumentas
-    else:
-        print("Sis argumentas yra tiesiog symbolis")
-        Argumentas=Argument(String[poz],syntax)
-        Argumentas.address=new_address
-        return Argumentas
-        
-def collect_command(poz,String,syntax,pattern):
-    '''Surenka komanda, su jos argumentais, jei komandos
-    argumentas yra verb tipo tai netikriname, komentaru buvimo
-    ir pasiimame iki uzdarancio skliausto.
-
-    Jei komanda turi comment tipo argumenta, velgi sokama
-    i uzdaranti skliausta.'''
-    komanda=''
-    args=[]
-    i=poz
-    ilg=skip_command_name(poz,String,syntax)
-    komanda=String[i:i+ilg]
-    i+=ilg
-    print('Pradedu komandos su zinomu paternu surinkima')
-    print("KOMANDA:",komanda)
-    print("POZICIJA:", context(i,String))
-    # susirenkam zvaigzdute
-    # ji atsiskiria nuo komandos kaip ir argumentas
-    if komanda[-1:]!='*':
-        ilg=skip_till_argument(i,String)
-        if String[i+ilg]=='*':
-            komanda=komanda+'*'
-            i+=ilg+1
-            print("surinkau komanda su zvaigzdute\n"\
-            "dabartine mano pozicija:{}".format(
-                context(i,String)))
-            print("KOMANDASUZV:",komanda)
-            
-        else:
-            pass    
-    print("Pradedu rinkti argumentus:\n",context(i,String)) 
-    print("Komandos_Paternas:",pattern)
-    if not pattern:
-        args=None
-    else:
-        print("Si komanda turi paterna!!!")
-        print("ESAME:",context(i,String))
-        for nr,k in enumerate(pattern):
-            # jei argumentas pagrindinis
-            if k.isupper() or k!=0:
-                # jei argumento syntakse nenurodyta
-                if k.isdigit():
-                    inner_syntax=syntax
-                else 
-                    inner_syntax=k
-                print("ieskom pagrindinio argumento:\n",
-                      context(i,String))
-                ilg=skip_till_argument(i,String,syntax)
-                i+=ilg
-                print("pagrindinio argumento pradzia:\n",
-                      context(i,String))
-                ilg=skip(i,String)
-                args.append(String[i:i+ilg])
-                i+=ilg
-            else:
-                ilg=skip_till_argument(i,String)
-                if String[i+ilg]=='[':
-                    # print("opcionalus",context(i,String))
-                    i+=ilg
-                    ilg=skip_braced(i,String,left='[',right=']')
-                    args.append(String[i:i+ilg])
-                    i+=ilg
-                else:
-                    args.append(None)
-                    pass
-                
-    return i-poz, komanda, args, String[poz:i], (poz,i)
-
-
-
-            
 def do_the_right_thing(poz,String,syntax,father,address,elem):
     '''Jei esamas charas yra metacharas,
     apibreztoje syntakseje, kreipiasi i kita
     algoritma, kuris priklausomai nuo esamo,
     konteksto ir metacharui priskirtos reiksmes 
-    grazina parsinimo metoda, tipa'''
+    grazina parsinimo metoda, tipa.
+
+    Inicializuojant nauja elementa turi buti perduodamas
+    tevelio adresas, kad ji butu galima ijungti i jo vidine struktura'''
     print("TIRIAMAS CHARAS",'>>'+String[poz]+'<<')
     new_address=address+[elem]
     print("Busimo elemento adresas",new_address)
@@ -859,6 +948,23 @@ def do_the_right_thing(poz,String,syntax,father,address,elem):
                 if command in commands.keys():
                     pattern=commands[command]['pattern']
                     Type=commands[command]['type']
+                    Object,lenght=collect_command(poz,String,syntax,
+                                                  pattern,Type,
+                                                  father,new_address)
+                    father.kids.append(Object)
+                    return lenght
+                # jei tai nezinoma komanda, surenkamas jos
+                # skriptinis pavadinimas ir inicializuojama 
+                # nezinoma komanda 
+                else:
+                    print("Rasta nezinoma komanda")
+                    Object=Command('unknown',String[poz:poz+k],
+                                   syntax,new_address)
+                    Object.body=String[poz:poz+k]
+                    print("Sios komandos kunas:",Object.body)
+                    father.kids.append(Object)
+                    return k
+                
         elif parse_type=='vcommand':
             print("Radau komanda verbatimineje aplinkoje!")
             k=skip_command_name(poz,String,syntax)
@@ -929,20 +1035,22 @@ def parse_wraped(poz,String,syntax,opening,len,address):
     return Object
 
 
-test=''' { \\begin{equation}
-    \\[ apacia \\]  pries 
-    \\iffalse {sito \\[nereikia\\] $parsinti$ } \\fi 
-     po 
-     \\end
-     %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-     {equation}  
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-     { $cia mtm$  { ir t.t  {   $ { kalno virsus  } $ }}}} $$ {a+b}{c+d} $$ $ x+y$ \\begin   
-    {equation}  aaa \\begin%    
-    {verbatim}   bbb \\end {verbatim}  aaaa  \\end{equation}   
-     '''
+# test=''' { \\begin{equation}
+#     \\[ apacia \\]  pries 
+#     \\iffalse {sito \\[nereikia\\] $parsinti$ } \\fi 
+#      po 
+#      \\end
+#      %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+#      {equation}  
+# %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+#      { $cia mtm$  { ir t.t  {   $ { kalno virsus  } $ }}}} $$ {a+b}{c+d} $$ $ x+y$ \\begin   
+#     {equation}  aaa \\begin%    
+#     {verbatim}   bbb \\end {verbatim}  aaaa  \\end{equation}   
+#      '''
 
-# objektas=parse(test,'T')
+test="tebunie taip \\mbox \komanda     aaa"
+
+objektas=parse(test,'T')
 
 def prasuk_objekta(objektas):
     for i in objektas.kids:
@@ -991,68 +1099,7 @@ def find_match(poz,String,syntax='T'):
     METACHARS=latexsyntax.SYNTAX[syntax]['metach']
     pass
     
-def skip_braced(poz,String,
-                meta=True,
-                verb=False,
-                COMMENT_SYNTAX=latexsyntax.COMMENT,
-                METACHARACTERS=latexsyntax.METACHARACTERS):
-        '''Grazina apskliausto reiskinio ilgi.
-        Jei meta=True, tai renka tik aktyvius skliaustus,
-        jei ne tai ieskos esamo skliausto poros.
 
-        Jei verb==True, tai is sintakses bus trumpam ismesti 
-        komentaro charai ir tarp skliaustu esancius % traktuos 
-        kaip simbolius.'''
-        if len(COMMENT_SYNTAX)!=1:
-            raise AlgError(
-                "Komentaro sintakses apibrezime yra daugiau"\
-                "negu vienas simbolis:\n"\
-                "{}\n{}".format(COMMENT_SYNTAX,context(i,String)),i)           
-        COMMENT_SYNTAX=latexsyntax.COMMENT
-        if meta:
-            DELIMETERS=latexsyntax.ARG_DELIMS
-        else:
-            DELIMETERS=latexsyntax.BRACES
-        # jei apskliaustas reiskinys yra
-        # verbatimine aplinka, ir procento zenklas nereiskia 
-        # komentaro pradzios
-        if verb:
-            del COMMENT_SYNTAX['%']
-        i=poz
-        char=String[poz]
-        if (char in latexsyntax.DELIMETERS.keys()) and metachar(poz,String):
-            left=String[poz]
-            right=latexsyntax.ARG_DELIMS[left]
-        else:
-            raise AlgError("Tai nera argumento skirtukas:"\
-                           "\n{}".format(context(i,String)),i)
-        if EOS(i,String):
-            raise EOSError(
-                "Tekstas baigiasi, ten kur "\
-                "turetu buti skliaudziamas argumentas!".format(
-                    context(i,String)),i)
-        i+=1
-        braces=[1,0]
-        while not braces[0]==braces[1]:
-            if String[i] in COMMENT_SYNTAX.keys() and metachar(i,String):
-                try:
-                    i+=skip_comment(i,String)
-                except EOSError:
-                    raise MatchError(
-                        'Nerasta skliausto pora!:\n{}'.format(
-                            context(poz,String)),poz)
-            if (String[i] in (left+right)) and metachar(i,String):
-                if String[i]==left: 
-                    braces[0]+=1
-                elif String[i]==right:
-                    braces[1]+=1
-            if braces[0]==braces[1]: break
-            if  EOS(i,String):
-                raise MatchError(
-                    'Nerasta skliausto pora!:\n{}'.format(
-                        context(poz,String)),poz)
-            i+=1
-        return i-poz+1
 
 
             
@@ -1086,109 +1133,6 @@ def find_matching(poz,String,syntax='T'):
 #         return VERB[String[poz:poz+k]]
 #     else: return False
     
-
-
-
-    
-
-
-
-    
-
-
-
-
-        
-############## DEMONSTRACIJA 
-test_dir=os.path.join(os.path.curdir,'test/')
-list_of_files=os.listdir(test_dir)
-list_of_files=[os.path.join(test_dir,a) for a in list_of_files]
-for fn in list_of_files:
-    if fn[-8:]!='test_nereik.tex': continue
-    with open(fn,'rt',encoding="ascii") as failas:
-        textas=failas.read()
-        i=0
-        try:
-            while True:
-                textas[i]
-                ###################################
-                # komentaru parsinimo demonstracija
-                if (i<3357):
-                    i+=1
-                    continue
-                    if is_start_of_comment(i,textas):
-                        k=skip_comment(i,textas)
-                        print(context(i,textas,End=i+k,Tag='C',Range=0,Delim=''),end='')
-                        i+=k
-                        continue
-                    else:
-                        print(textas[i],end='')
-                        i+=1
-                        continue
-                ###################################
-                # komandu atpazinimo demonstracija
-                # komandos vardo pradzia
-                if (i>=3357) and (i<3844):
-                    # skipinimui
-                    i+=1
-                    continue
-                    if is_start_of_cmd(i,textas):
-                        print(context(i,textas,End=i+k,Range=0,Delim=''),end='')
-                        i+=k
-                        continue
-                    else:
-                        print(textas[i],end='')
-                        i+=1
-                        continue
-                # komandos vardas 
-                if (i>=3844) and (i<3992):
-                    i+=1
-                    continue 
-                    if is_start_of_cmd(i,textas):
-                        k=skip_command_name(i,textas)
-                        print(context(i,textas,End=i+k,Tag='NoC',Range=0,Delim=''),end='')
-                        i+=k
-                        continue
-                    else:
-                        print(textas[i],end='')
-                        i+=1
-                        continue
-                ################################
-                # inline verbatimai 
-                if (i>=3992) and (4554>i):
-                    i+=1
-                    continue 
-                    if is_verbatim(i,textas):
-                        k=skip_inline_verbatim(i,textas)
-                        print(context(i,textas,End=i+k,Tag='V',Range=0,Delim=''),end='')
-                        i+=k
-                        continue
-                    else:
-                        print(textas[i],end='')
-                        i+=1
-                        continue
-                ############################## 
-                # kelione iki argumento
-                if (i>=4554) and (5119>i):
-                    if is_start_of_cmd(i,textas):
-                        k=skip_command_name(i,textas)
-                        name=textas[i:i+k]
-                        print(name,end='')
-                        i+=k
-                        i+=skip_till_argument(i,textas)
-                        continue
-                    else:
-                        print(textas[i],end='')
-                        i+=1
-                        continue
-
-                i+=1
-        except EOSError:
-            print("DARBAS BAIGTAS")
-            failas.close()
-        except IndexError:
-            print("DARBAS BAIGTAS")
-            failas.close()
 
 
         
