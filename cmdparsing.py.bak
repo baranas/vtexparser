@@ -617,7 +617,7 @@ def collect_argument(poz,String,syntax,new_address,command):
         print("Sis argumentas turi vidine struktura")
         Object=parse_wraped(poz,String,syntax,String[poz],1,
                                 new_address)
-        return Object, Object.lenght
+        return Object
     cmd_start=latexsyntax.SYNTAX[syntax]['cmd_start']
     if String[poz] in cmd_start.keys():
         print("Sis argumentas yra komandos tipo")
@@ -625,13 +625,13 @@ def collect_argument(poz,String,syntax,new_address,command):
         Argumentas=Argument(syntax)
         Argumentas.body=String[poz:poz+k]
         Argumentas.address=new_address
-        return Argumentas, k
+        return Argumentas
     else:
         print("Sis argumentas yra tiesiog symbolis")
         Argumentas=Argument(syntax)
         Argumentas.body=String[poz]
         Argumentas.address=new_address
-        return Argumentas, 1
+        return Argumentas
 
 def skip_braced(poz,String,
                 meta=True,
@@ -702,7 +702,6 @@ def collect_command(poz,String,syntax,pattern,Type,father,address):
     ir pasiimame iki uzdarancio skliausto.
     Grazinamas komandos tipo objektas!'''
     print("\n\nPradedu komandos surinkima")
-    print("Jos_addresas:",address)
     komanda=''
     elem=0
     args=[]
@@ -751,12 +750,10 @@ def collect_command(poz,String,syntax,pattern,Type,father,address):
                       context(i,String))
                 new_address=address.append(elem)
                 elem+=1
-                print("Pagrindiniam argumentui perduodamas adresas:",new_address)
-                argument, lenght=collect_argument(i,String,inner_syntax,
-                                          address,command)
+                argument=collect_argument(i,String,inner_syntax,
+                                          new_address,command)
                 command.args.append(String[i:i+ilg])
-                print("ARGUMENTO ILGIS")
-                i+=lenght
+                i+=ilg
             # jei argumentas opcionalus 
             else:
                 print("Pradedamas surinkineti opcionalus argumentas")
@@ -845,7 +842,6 @@ def parse(String, syntax='T', checking=None, father=FruitfullObject('MAIN'),
         o tiesiog surenkamas (icomment,text,symbol ir t.t.)
     Grazinamas suparsinto teksto ilgis.'''
     # jei esamas reiskinys yra gilesnis
-    print(address,"ISIJUNGIA PARSINIMO MECHANIZMAS")
     if checking:
         checkas=checking
     else:
@@ -878,7 +874,7 @@ def do_the_right_thing(poz,String,syntax,father,address,elem):
 
     Inicializuojant nauja elementa turi buti perduodamas
     tevelio adresas, kad ji butu galima ijungti i jo vidine struktura'''
-    print("DO_THE_RIGHT_THING:",'>>'+String[poz]+'<<')
+    print("TIRIAMAS CHARAS",'>>'+String[poz]+'<<')
     print("Isorinis addresas",address)
     print("Sis elementas isoriniame adrese yra",elem)
     new_address=address+[elem]
@@ -953,7 +949,6 @@ def do_the_right_thing(poz,String,syntax,father,address,elem):
                 if command in commands.keys():
                     pattern=commands[command]['pattern']
                     Type=commands[command]['type']
-                    print("perduodamas_adresas:",new_address)
                     Object,lenght=collect_command(poz,String,syntax,
                                                   pattern,Type,
                                                   father,new_address)

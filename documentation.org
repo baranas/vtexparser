@@ -1,93 +1,62 @@
-* Klaustukai
-1. Ar comment tipo aplinkose gali buti sintakses klaidu?
-2. patikrinti 
- - \begin{comment} ... \\end{comment}
- - \comment ... \endcomment
- - \comment \comment \endcomment
-3. GILIAU PAANALIZUOTI SWITCH IR ENVIROMENT VIDINE STRUKTURA
- - Ar syntakses priklauso nuo to, ar tai switchas ar enviromentass
+* Savokos
+- Syntakse -- funkcija siejanti aktyvius symbolius ir parsinimo metodus
+- Parsinimo metodas -- algoritmas surenkantis visa LaTeX skripto reiskini, kuris
+  parsinimo metu isskiriamas is bendro konteksto.
+- Reiskinys -- LaTeX skripto objektas turintis vidine struktura.
+  Reiskiniu tipai:
+  * Paprastos strukturos reiskiniai -- reiskiniai neturintys sudetingos ar
+    strukturos ir savo atskiros syntakses (inline komentarai, inline_verbatimai, tekstas)
+  * Gilios strukturos reiskiniai -- reiskiniai galintys tureti savo atskira syntakse,
+    ju struktura gali sudaryti kiti paprastos arba gilios strukturos reiskiniai.
+    Taip pat turintys skirtukus, skriptiniame faile isskiriancius juos is isorinio 
+    reiskinio
+* Parsinimo procesas
+** Parsinimo sirdis
+   Funkcijai =parse=  perduodamas algoritmas tikrinantis ar symbolis i kuri ziurima nera
+   uzdarancio esama reiskini skirtuko pradzia.
+   Skirtukai:
+   - aktyvus symboliai ($...$, {...})
+   - aktyviu symboliu kombinacijos ($$...$$)
+   - TeX'ines komandos:
+     + griesti switch'ai (\iffalse...\fi, \[ ... \], \( ... \))
+     + enviromentai (\begin{aplinka}...\end{aplinka})
+       
+   Funkcija parse, savo veikimo metu su savimi nesasi:
+   - parsinamo reiskinio syntakse.
+     tabular tipo objekte & -> kolonos skirtukas
+     tekstiniame objekte $ -> matematinio reiksinio pradzia
+     matematiniame reiskinyje $ -> matematinio reiskinio pabaiga
+     verbatiminiame reiskinyje % -> symbolis
+     tekstiniame reikinyje % -> komentaro pradzia 
+     index argumente % -> dar kita reiksme ir t.t.
+   - nuoroda i parsinama eilute
+   - parsinimo objekta priklausanti esamam reiskiniui ir kuriama parsinimo metu.
+     Objektu pavyzdziai:
+     + inline matematika =...$ a + b $...=
+     + apskliaustas reiskinys =...{ tekstas }...=
+       -- gali buti komandos argumentas, arba siaip apskliaustas
+       reiskinys
+     + 
+   - uzdarymo ieskanti algoritma
 
- 
-* Algoritmas
-** Parsinimo eiga
-Pagrindinis parsinimo procesas uzfiksuotas funkcijoje parse.
-Si funkcija: 
-1) tikrina ar esamas taskas nera parsinamo objekto
-   uzdarymo reiskinio pradzia
-2) jei ne (1), tai tikrina ar jis yra gilesnio objekto inicializacijos
-   pradzia
+*** Algoritmas 
+    1) Tikrinama ar esamas reiskinys neuzdaromas, jei taip:
+       - grazinamas pilnas reiskinys (a) =objekto pavidalu= (reiskinys) su suparsintu turiniu 
+	 ir sio (b) =objekto skriptines reprezentacijos ilgis=, 
+	 (c) =objekta uzdarancio reiskinio ilgis=
+       jei ne:
+       - kreipiamasi i funkcija =do_the_right_thing= perduodant esama =syntakse=, 
+	 =nuoroda i esama objekta=,  =nuoroda i tiriama symboli=.
+    2) =do_the_right_thing= funkcijos pagrindines uzduotys:
+       - atpazinti ar symbolis i kuri ziurima yra aktyvus ar ne
+       - jei esamas symbolis neaktyvus tai surinkti visa nuosekliai einancia neaktyviu
+	 symboliu seka ir grazinti paprastos strukturos objekta, su priskirtu tipu 
+	 -- sakykim =tekstas=
+       - jei symbolis aktyvus, tai kreiptis i esamoje syntakseje aprasyta algoritma surenkati
+	 LaTeX skripto dali sudarancia tam tikra reiskini
+    3) =Iskviestas metodas= surenka atitinkama reiskini ir grazina ji objekto pavidalu, bei sio
+       objekto ilgi.
+    4) =do_the_right_thing= grazina =parse= procesui =ilgi surinkto objekto=,
+       kad nusokti i koordinate uz surinkto objekto ir prideda
+       surinkta vidini objekta prie =parse= kuriamo objekto.
 
-** Skirtukai
-LaTeX'o scriptuose dazniausiai pasitaikantys objektai, 
-turintys atidarancius ir uzdarancius reiskinius:
-   |-------------------+--------------------+-------------------|
-   | tipas             | atidarymo pavyzdys | uzdarymo pavyzdys |
-   |-------------------+--------------------+-------------------|
-   | aktyvus symboliai | {                  | }                 |
-   |                   | $                  | $                 |
-   |                   | $$                 | $$                |
-   |-------------------+--------------------+-------------------|
-   | griezti switch    | \(                 | \)                |
-   | (komandos tipo    | \iffalse           | \fi               |
-   | jungikliai)       | \[                 | \]                |
-   |-------------------+--------------------+-------------------|
-   | enviromentai      | \begin{equation}   | \end{equation}    |
-   |                   | \begin{comment}    | \end{comment}     |
-   |                   | \begin{verbatim}   | \end{verbatim}    |
-   |-------------------+--------------------+-------------------|
-
-Kiekvieno is siu skirtuku turinys gali tureti savo individualia syntakse.
-Pavyzdziui:
- * skirtukais $...$ apgaubtas reiskinys viduje tures matematine 
-   syntakse, kuri siek tiek skiriasi, nuo isorines tesktines
-   ($ reiskia matematines modos isjungima, _-subskripto pradzia,
-    ^-superskripto pradzia ir t.t.);
- * turinyje apgaubtame \iffalse ... \fi, niekas neturi jokios reiksmes
-   iskyrus pacius \iffalse ir \fi. 
-
-** Parametrai
-Taip pat, kiekvienas reiskinys su savo syntakse (kuri vadinsime moda), 
-gali tureti tam tikrus nustatymus, kurie gali buti apibrezti:
- - pries inicializuojant reiskini
-   * \tabcolsep=10pt ... \begin{tabular*}
-   * nutylint detales (pvz. \documentclass apibrezime) 
- - inicializacijos metu: \begin{Verbatim}[commentchar=#]...\end{verbatim}
- - po inicializacijos 
-   * pradzioje  \begin{table}\tablewith=10cms
-   * konteksto viduryje $ \frac{1}{2} \displaystyle \frac{1}{2} $
-  
-** Komandos
-Kiekvienas sutiktas '\' parsinimo eigoje reiškia komandos pavadinimo surinkima.
-Surinkus komandos pavadinimą yra žiųrimą į jau esamą pavadinimų erdvę (namespace) 
-ir nustatoma šios komandos reikšmė bei tipas. Parsinimo eigoje labai svarbu žinoti:
- - ar komanda yra simbolis (\alpha, \textbullet, ...)
- - ar tai yra komanda su argumentais, kurių surinkimui bus reikalingas
-   atskiras argumentu parsinimas  \textbf{...}
- - ar tai yra tam tikro parametro pakeitimas (\tablewidth=10cm, \it, \tt, \em)
- - ar tai yra enviromento pradzia, kurio turinys bus parsinamas atskirai
- - ar tai yra grieztas jungtukas, kurio isjungimui bus reikalinga kita komanda \[...\]
-
-
-
-
-1. Pradedama parsinima:
-    Tevelis=None
-2. Renkam viska kas nera metacharai iprastoje sintakseje ir
-traktuojam kaip teksta.
-3.Sutike metachara kvieciam atitinkama metoda apibrezta standartinei sintaksei.
-  a) elementai neturintys turinio:
-      * symboliai
-      * opcijos
-      * inline komentaras
-      * inline verbatimas
-      * nezinomos komandos
-      * nustatymai \tablewidth=10pt
-      
-  b) elementai turintys turini ir galima kitokia sintakse
-      * apskliaustas reiskinys {}
-        is naujo inicializuojam parsinimo procesa:
-            Tevelis=tai kas sustabdys esama parsinima 
-              siuo atveju '{'                   
-      * komanda: opcionalus ir pagrindiniai argumentai:
-          - {} ir [] reiskiniu surinkimas
-      *
