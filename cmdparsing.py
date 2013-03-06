@@ -89,19 +89,6 @@ def context(poz,String,End=False,Range=50,Tag=False,Delim=False):
               ####         PARSINIMO METU         ####
               ##     INICIALIZUOJAMI OBJEKTAI       ##
 
-class ParseObject():
-    '''Universalus objektas parsinime.'''
-    def __init__(self,tipas):
-        self.body=''                      # skriptinio pavidalo kunas
-        self.Type=tipas
-
-class FruitfullObject(ParseObject):
-    '''Objektas turinti vidine struktura,
-    sudaryta is kitu objektu.'''
-    def __init__(self,tipas):
-        super().__init__(tipas)
-        self.kids=[]
-
               ######################################## 
               ####      OBJEKTU KOMPONENTAI       ####
 
@@ -111,10 +98,78 @@ class Opening:
         self.Type=Tipas
         self.name=Name
         self.body=Body
+    def show_self(self):
+        print(self.body,'<--',self.Type)
 
 class Closing(Opening):
     def __init__(self,Tipas,Name,Body):
         super().__init__(Tipas,Name,Body)
+        
+
+              
+              ######################################## 
+              ####         PATYS OBJEKTAI         ####
+              
+class ParseObject():
+    '''Universalus objektas parsinime.'''
+    def __init__(self,tipas):
+        self.body=''                      # skriptinio pavidalo kunas
+        self.Type=tipas
+
+class FruitfullObject(ParseObject):
+    '''Objektas turintis vidine struktura, sudaryta 
+    is kitu objektu. Jis taip pat savyje turi opening 
+    ir closing objektus.'''
+    def __init__(self,tipas):
+        super().__init__(tipas)
+        self.kids=[]             # vidine struktura
+        # butinas atidarantis reiskinys
+        self.opening=Opening('PRADZIA','PRADZIA','PRADZIA')
+        self.closing=Closing('PRADZIA','PRADZIA','PRADZIA')
+        self.address=[]
+    def show_self(self):
+        print('  '*len(self.address),end='')
+        print('--v') 
+        print('  '*len(self.address),end='')
+        self.opening.show_self()
+        for i in self.kids:
+            i.show_self()
+        print('  '*len(self.address),end='')
+        self.closing.show_self()
+        print('  '*len(self.address),end='')
+        print('--^')         
+
+class SimpleStructure(ParseObject):
+    def __init__(self,tipas):
+        super().__init__(tipas)
+        self.fulltext=''
+        self.address=[]
+    def show_self(self):
+        print('  '*len(self.address),end='') 
+        print('['+self.fulltext+']','<--',self.Type)
+        
+class Command(ParseObject):
+    '''Komanda su argumentais.
+    syntax--sintakse kurioje inicializuota komanda
+    name--komandos scriptine reprezentacija'''
+    def __init__(self,tipas,name,syntax,address):
+        self.Type=tipas
+        self.name=name
+        self.syntax=syntax
+        self.address=address
+        self.args=[]
+    def show_self(self):
+        print('  '*len(self.address),end='') 
+        print(self.name,'<--Komanda:',self.Type)
+        for i,arg in enumerate(self.args):
+            print('  '*len(self.address),end='') 
+            print('-'*10,str(i+1)+'-as argumentas')
+            arg.show_self()
+            print('  '*len(self.address),end='') 
+            print('-'*20)
+            
+ 
+
 
               ######################################## 
               ####   IPRASTI METODAI NAUDOJAMI    ####
@@ -572,30 +627,6 @@ def parse_icomment(poz,String,syntax):
               ######################################## 
               ####            KOMANDOS            ####
               ##       SURINKIMO  MECHANIZMAI       ##
-
-class Argument(ParseObject):
-    '''Argumento objektas, savyje talpinantis
-    argumento reiskini be skirtuku.'''
-    def __init__(self,syntax):
-        self.body=''
-        self.syntax=syntax
-
-class FruitfullArgument(Argument):
-    '''Argumentas turintis vidine struktura.'''
-    def __init__(self,body,syntax):
-        super.__init__(body,syntax)
-        self.kids=[]
-
-class Command(ParseObject):
-    '''Komanda su argumentais.
-    syntax--sintakse kurioje inicializuota komanda
-    name--komandos scriptine reprezentacija'''
-    def __init__(self,tipas,name,syntax,address):
-        self.Type=tipas
-        self.name=name
-        self.syntax=syntax
-        self.address=address
-        self.args=[]
         
 def collect_argument(poz,String,syntax,address):
     '''Surenka argumenta priklausomai nuo to, 
@@ -775,7 +806,9 @@ def collect_command(poz,String,syntax,address):
                 else:
                     args.append(None)
                     pass
-    return command, i
+    print("Komanda baigta parsinti taske:\n",context(i,String))
+    command.fulltext=String[poz:i]
+    return command, i-poz
     
            ############################################### 
              ######       PARSINIMO PROCESAS      #####
@@ -937,13 +970,13 @@ def do_the_right_thing(poz,String,syntax,Father,address,elem):
                 lenght, env_name=collect_enviroment_name(poz,String,syntax)
                 opening=String[poz:poz+lenght]
                 inner_syntax=latexsyntax.SYNTAX[syntax]['enviroments']\
-                  [name]['content']
+                  [env_name]['content']
                 if inner_syntax == 'O':
                     inner_syntax=syntax
                 Object, lenght=parse_wraped(poz,String,inner_syntax,env_name,
                                     lenght,new_address)
-                Object.opening.formated='\\begin{'+name+'}'
-                Object.closing.formated='\\end{'+name+'}'
+                Object.opening.formated='\\begin{'+env_name+'}'
+                Object.closing.formated='\\end{'+env_name+'}'
                 Father.kids.append(Object)
                 return lenght
             ####################                 
@@ -983,8 +1016,8 @@ def do_the_right_thing(poz,String,syntax,Father,address,elem):
             print("Jos ilgis",k)
             command=String[poz:poz+k]
             print("Komanda:",command)
-            Object=ParseObject("text")
-            Object.body=String[poz:poz+k]
+            Object=SimpleStructure("verbatim_text")
+            Object.fulltext=String[poz:poz+k]
             Object.lenght=k
             Object.address=new_address
             Father.kids.append(Object)
@@ -995,8 +1028,8 @@ def do_the_right_thing(poz,String,syntax,Father,address,elem):
             Method=METHODS[method]['method']
             Type=METHODS[method]['type']
             k=Method(poz,String,syntax)
-            Object=ParseObject(Type)
-            Object.body=String[poz:poz+k]
+            Object=SimpleStructure(Type)
+            Object.fulltext=String[poz:poz+k]
             Object.lenght=k
             Object.address=new_address
             print("SUKURTAS PAPRASTOS STRUKTUROS OBJEKTAS:",
@@ -1005,8 +1038,8 @@ def do_the_right_thing(poz,String,syntax,Father,address,elem):
             return Object.lenght
     else:
         k=skip_text(poz,String,syntax)
-        Object=ParseObject("text")
-        Object.body=String[poz:poz+k]
+        Object=SimpleStructure("text")
+        Object.fulltext=String[poz:poz+k]
         Object.lenght=k
         Object.address=new_address
         Father.kids.append(Object)
@@ -1036,6 +1069,8 @@ def parse_wraped(poz,String,syntax,opening,len,address):
     Objektas.lenght=len+k+closing_len
     Objektas.address=address
     Objektas.body=String[poz+len:poz+len+k]
+    Objektas.opening=Atidarantis_skirtukas
+    Objektas.closing=Uzdarantis_skirtukas
     return Objektas, Objektas.lenght 
 
 
@@ -1052,9 +1087,24 @@ def parse_wraped(poz,String,syntax,opening,len,address):
 #     {verbatim}   bbb \\end {verbatim}  aaaa  \\end{equation}   
 #      '''
 
-test="tebunie taip \\mbox{vidinis argumentas}    aaa"
+test='''
+tebunie taip \\mbox{vidinis argumentas}  $ pirmoji matematika $  
+% tai yra komentaras
+\\begin
+%%%%%%%%%%%%
+{equation}
+%%%%%%%%%%%%
+c+b+d
+\\mbox{tekstas matematikoje $x+y\\mbox{ tai $$ z \\times x $$  $a$$b$tekstas} $}
+\\end  {equation}
+teksto pabaiga 
+\\iffalse   $ {     \\begin       \\fi \\[ display matematika \\iffalse \\] \\fi \\] 
+'''
 
+print()
+print()
 objektas=parse(test,'T')
+objektas.show_self()
 
 def prasuk_objekta(objektas):
     for i in objektas.kids:
@@ -1088,160 +1138,3 @@ def skip_inline_verbatim(poz,String):
     i+=1
     return i-poz
            
-def find_match(poz,String,syntax='T'):
-    '''IESKOMA SUPORUOTO REISKINIO, 
-    ATITINKAMAI KVIECIANT SITA PACIA 
-    FUNKCIJA PAIESKOS PROCESE!
-    - verbatiminiai komandu argumentai
-    - verbatiminiai enviromentai
-    - verbatiminiai griezti switchai
-    Apejimas atliekamas, naudojant taip pat sita 
-    funkcija.'''
-    # PIRMA NUSTATOMA, KA APIEDINESIM
-    # KREIPIANTI I FUNKCIJA NURODOMA VIDUJE 
-    # SUPORUOTU REISKINIU ESANTI SYNTAKSE
-    METACHARS=latexsyntax.SYNTAX[syntax]['metach']
-    pass
-    
-
-
-
-            
-def find_matching(poz,String,syntax='T'):
-    '''Suranda suporuota reiskini,
-    supranta ar ieskoti:
-    - metaskliaustu
-    - ar griezto switch
-    - ar enviromento.
-    Ieskodamas apeina inline komentarus,
-    inline verbatimus ir kitas komentarines ir 
-    verbatimines aplinkas.'''
-    # NUSTATYMAS KO IESKOSIM IR KAS BUS ATIDARANTYS
-    # IR UZDARANTYS REISKINIAI
-    
-
-            
-
-        
-# def is_verbatim(poz,String,VERB=latexsyntax.VERB):
-#     '''Patikrina ar esama komanda yra
-#     verbatimines aplinkos pradzia.
-#     Grazina: 
-#     i-jei inline verbatimas
-#     e-jei enviromentas
-#     s-jei grieztas switchas'''
-#     if not is_start_of_cmd(poz,String):
-#         return False
-#     k=skip_command_name(poz,String)
-#     if String[poz:poz+k] in VERB.keys():
-#         return VERB[String[poz:poz+k]]
-#     else: return False
-    
-
-
-        
-def skip_braced_verb(poz,String,left='{',right='}'):
-        '''Grazina apskliausto reiskinio ilgi.
-        Reiskinyje netikrinamas komentaru buvimas'''        
-        i=poz
-        if left=='{':
-            if EOS(i,String):
-                raise EOSError(
-                        "Tekstas baigiasi, ten kur "\
-                        "turetu buti pagrindinis argumentas!".format(
-                                context(i,String)),i)
-        i+=1
-        braces=[1,0]
-        while not braces[0]==braces[1]:
-            if (String[i] in (left+right)) and metachar(i,String):
-                if String[i]== left: 
-                    braces[0]+=1
-                elif String[i]==right:
-                    braces[1]+=1
-            if braces[0]==braces[1]: break
-            if  EOS(i,String):
-                raise MatchError(
-                    'Nerasta skliausto pora:\n{}'.format(
-                        context(poz,String)),poz)
-            i+=1
-        return i-poz+1
-
-
-def skip_argument(poz,String):
-    '''Surenkamas komandos argumentas, priklausomai,
-    nuo to koks dabartinis charas.'''
-    i=poz
-    if String[poz]=='\\':
-        i+=skip_command(i,String)
-    elif String[poz]=='{':
-        i+=skip_braced(i,String)
-    elif String[poz] in latexsyntax.ARGUMENT:
-        i+=1
-    else: 
-        raise AlgError(
-            "Turejo buti "\
-            " pagrindinis argumentas:\n".format(context(i,String)),i)
-    return i-poz
-
-def skip_argument_verb(poz,String):
-    '''Surenkamas komandos argumentas,
-    kurio turinys verbatiminis.'''
-    i=poz
-    if String[poz]=='\\':
-        raise ParseEroor(
-            "Esamas argumentas turetu buti apskliaustas"\
-            "nes jo turinys verbatim tipo".format(
-                context(i,String),i))
-    elif String[poz]=='{':
-        # NEBEIGNORUOJAM KOMENTARU ARGUMENTE 
-        i+=skip_braced_verb(i,String)
-    elif String[poz] in latexsyntax.ARGUMENT:
-        raise ParseEroor(
-            "Esamas argumentas turetu buti apskliaustas"\
-            "nes jo turinys verbatim tipo".format(
-                context(i,String),i))
-    else: 
-        raise AlgError(
-            "Turejo buti "\
-            " pagrindinis argumentas:\n".format(context(i,String)),i)
-    return i-poz
-
-    
-
-
-
-################# PRISTATYMUI ##########
-######################################## 
-
-#################### METACHARU TIKRINIMAS ##########
-# for fn in list_of_files:
-#     with open(fn,'rt',encoding="ascii") as failas:
-#         textas=failas.read()
-#         for i,j in enumerate(textas):
-#             if metachar(i,textas):
-#                 print(context(i,textas))
-#                 input()        
-
-  
-# # #############INLINE KOMENTARU TESTINIMAS
-# test_dir=os.path.join(os.path.curdir,'test/')
-# list_of_files=os.listdir(test_dir)
-# list_of_files=[os.path.join(test_dir,a) for a in list_of_files]
-# for fn in list_of_files:
-#     if fn[-8:]!='test.tex': continue
-#     with open(fn,'rt',encoding="ascii") as failas:
-#         textas=failas.read()
-#         i=0
-#         try:
-#             while True:
-#                 if is_start_of_comment(i,textas):
-#                     k=skip_comment(i,textas)
-#                     print(context(i,textas,End=i+k,Tag='komentaras'))
-#                     input()
-#                     i+=k 
-#                 i+=1
-#         except IndexError:
-#             print("DARBAS BAIGTAS")
-#         except EOSError:
-#             print("DARBAS BAIGTAS")
-

@@ -1,0 +1,691 @@
+In [63]: 
+
+
+
+>>> [] ISIJUNGIA PARSINIMO MECHANIZMAS
+>>>VIDINE_SYNTAKSE: T
+DO_THE_RIGHT_THING: >>
+<<
+Isorinis addresas []
+Sis elementas isoriniame reiskinyje yra 0
+Sukurtas naujas adresas [0]
+SUKURTAS TEKSTO OBJEKTAS: >><<
+DO_THE_RIGHT_THING: >>\<<
+Isorinis addresas []
+Sis elementas isoriniame reiskinyje yra 1
+Sukurtas naujas adresas [1]
+Su charu sisijes metodas tcommand
+Esamas metacharas yra komandos pradzia
+Si komanda yra aprasyta syntakseje
+perduodamas_adresas: [1]
+
+
+Pradedu komandos surinkima
+
+
+
+>>>Pradedu_komandos_su_zinomu_paternu_surinkima
+KOMANDA: \mbox
+ESAMA_POZICIJA: 
+tebunie taip \mbox@-->>{<<@--vidinis argumentas}  $ pirmoji matematika $  
+% t
+Paternas: ('T',)
+Sios komandos adresas [1]
+Pradedu rinkti argumentus:
+ 
+tebunie taip \mbox@-->>{<<@--vidinis argumentas}  $ pirmoji matematika $  
+% t
+Komandos_Paternas: ('T',)
+Si komanda turi paterna!!!
+ESAME: 
+tebunie taip \mbox@-->>{<<@--vidinis argumentas}  $ pirmoji matematika $  
+% t
+ieskom pagrindinio argumento:
+ 
+tebunie taip \mbox@-->>{<<@--vidinis argumentas}  $ pirmoji matematika $  
+% t
+pagrindinio argumento pradzia:
+ 
+tebunie taip \mbox@-->>{<<@--vidinis argumentas}  $ pirmoji matematika $  
+% t
+Pagrindiniam argumentui perduodamas adresas: [1, 0]
+Pradedamas surinkineti argumentas
+Esamas charas {
+Argumentui priskiriamas adresas [1, 0]
+Sis argumentas turi vidine struktura
+
+Parsinu_apgaubta: 
+tebunie taip \mbox@-->>{<<@--vidinis argumentas}  $ pirmoji matematika $  
+% t
+Atidarantis_reiskinys: {
+Naujo_elemento_adresas: [1, 0]
+Skirtuko_tipas: delimeter
+
+
+>>> [1, 0] ISIJUNGIA PARSINIMO MECHANIZMAS
+>>>VIDINE_SYNTAKSE: T
+DO_THE_RIGHT_THING: >>v<<
+Isorinis addresas [1, 0]
+Sis elementas isoriniame reiskinyje yra 0
+Sukurtas naujas adresas [1, 0, 0]
+SUKURTAS TEKSTO OBJEKTAS: >><<
+
+Vidinio reiskinio ilgis: 18
+Vidinis_reiskinys: >>vidinis argumentas<<
+Uzdarantis reiskinys: }
+Viso reiskinio ilgis: 20
+Komanda baigta parsinti taske:
+ 
+tebunie taip \mbox{vidinis argumentas}@-->> <<@-- $ pirmoji matematika $  
+% tai yra komentaras
+\b
+DO_THE_RIGHT_THING: >> <<
+Isorinis addresas []
+Sis elementas isoriniame reiskinyje yra 2
+Sukurtas naujas adresas [2]
+SUKURTAS TEKSTO OBJEKTAS: >><<
+DO_THE_RIGHT_THING: >>$<<
+Isorinis addresas []
+Sis elementas isoriniame reiskinyje yra 3
+Sukurtas naujas adresas [3]
+Su charu sisijes metodas math
+Esamas metacharas yra skirtukas
+sis skirtukas yra vieno symbolio
+
+Parsinu_apgaubta: 
+tebunie taip \mbox{vidinis argumentas}  @-->>$<<@-- pirmoji matematika $  
+% tai yra komentaras
+\beg
+Atidarantis_reiskinys: $
+Naujo_elemento_adresas: [3]
+Skirtuko_tipas: delimeter
+
+
+>>> [3] ISIJUNGIA PARSINIMO MECHANIZMAS
+>>>VIDINE_SYNTAKSE: M
+DO_THE_RIGHT_THING: >> <<
+Isorinis addresas [3]
+Sis elementas isoriniame reiskinyje yra 0
+Sukurtas naujas adresas [3, 0]
+SUKURTAS TEKSTO OBJEKTAS: >><<
+
+Vidinio reiskinio ilgis: 20
+Vidinis_reiskinys: >> pirmoji matematika <<
+Uzdarantis reiskinys: $
+Viso reiskinio ilgis: 22
+DO_THE_RIGHT_THING: >> <<
+Isorinis addresas []
+Sis elementas isoriniame reiskinyje yra 4
+Sukurtas naujas adresas [4]
+SUKURTAS TEKSTO OBJEKTAS: >><<
+DO_THE_RIGHT_THING: >>%<<
+Isorinis addresas []
+Sis elementas isoriniame reiskinyje yra 5
+Sukurtas naujas adresas [5]
+Su charu sisijes metodas icomment
+SUKURTAS PAPRASTOS STRUKTUROS OBJEKTAS: >><<
+DO_THE_RIGHT_THING: >>\<<
+Isorinis addresas []
+Sis elementas isoriniame reiskinyje yra 6
+Sukurtas naujas adresas [6]
+Su charu sisijes metodas tcommand
+Esamas metacharas yra enviromento pradzia
+
+Parsinu_apgaubta: s}  $ pirmoji matematika $  
+% tai yra komentaras
+@-->>\<<@--begin
+%%%%%%%%%%%%
+{equation}
+%%%%%%%%%%%%
+c+b+d
+
+Atidarantis_reiskinys: equation
+Naujo_elemento_adresas: [6]
+Skirtuko_tipas: enviroment
+
+
+>>> [6] ISIJUNGIA PARSINIMO MECHANIZMAS
+>>>VIDINE_SYNTAKSE: M
+DO_THE_RIGHT_THING: >>
+<<
+Isorinis addresas [6]
+Sis elementas isoriniame reiskinyje yra 0
+Sukurtas naujas adresas [6, 0]
+SUKURTAS TEKSTO OBJEKTAS: >><<
+DO_THE_RIGHT_THING: >>%<<
+Isorinis addresas [6]
+Sis elementas isoriniame reiskinyje yra 1
+Sukurtas naujas adresas [6, 1]
+Su charu sisijes metodas icomment
+SUKURTAS PAPRASTOS STRUKTUROS OBJEKTAS: >><<
+DO_THE_RIGHT_THING: >>c<<
+Isorinis addresas [6]
+Sis elementas isoriniame reiskinyje yra 2
+Sukurtas naujas adresas [6, 2]
+SUKURTAS TEKSTO OBJEKTAS: >><<
+DO_THE_RIGHT_THING: >>\<<
+Isorinis addresas [6]
+Sis elementas isoriniame reiskinyje yra 3
+Sukurtas naujas adresas [6, 3]
+Su charu sisijes metodas mcommand
+Esamas metacharas yra komandos pradzia
+Si komanda yra aprasyta syntakseje
+perduodamas_adresas: [6, 3]
+
+
+Pradedu komandos surinkima
+
+
+
+>>>Pradedu_komandos_su_zinomu_paternu_surinkima
+KOMANDA: \mbox
+ESAMA_POZICIJA: 
+%%%%%%%%%%%%
+c+b+d
+\mbox@-->>{<<@--tekstas matematikoje $x+y\mbox{ tai $$ z \times x
+Paternas: ('T',)
+Sios komandos adresas [6, 3]
+Pradedu rinkti argumentus:
+ 
+%%%%%%%%%%%%
+c+b+d
+\mbox@-->>{<<@--tekstas matematikoje $x+y\mbox{ tai $$ z \times x
+Komandos_Paternas: ('T',)
+Si komanda turi paterna!!!
+ESAME: 
+%%%%%%%%%%%%
+c+b+d
+\mbox@-->>{<<@--tekstas matematikoje $x+y\mbox{ tai $$ z \times x
+ieskom pagrindinio argumento:
+ 
+%%%%%%%%%%%%
+c+b+d
+\mbox@-->>{<<@--tekstas matematikoje $x+y\mbox{ tai $$ z \times x
+pagrindinio argumento pradzia:
+ 
+%%%%%%%%%%%%
+c+b+d
+\mbox@-->>{<<@--tekstas matematikoje $x+y\mbox{ tai $$ z \times x
+Pagrindiniam argumentui perduodamas adresas: [6, 3, 0]
+Pradedamas surinkineti argumentas
+Esamas charas {
+Argumentui priskiriamas adresas [6, 3, 0]
+Sis argumentas turi vidine struktura
+
+Parsinu_apgaubta: 
+%%%%%%%%%%%%
+c+b+d
+\mbox@-->>{<<@--tekstas matematikoje $x+y\mbox{ tai $$ z \times x
+Atidarantis_reiskinys: {
+Naujo_elemento_adresas: [6, 3, 0]
+Skirtuko_tipas: delimeter
+
+
+>>> [6, 3, 0] ISIJUNGIA PARSINIMO MECHANIZMAS
+>>>VIDINE_SYNTAKSE: T
+DO_THE_RIGHT_THING: >>t<<
+Isorinis addresas [6, 3, 0]
+Sis elementas isoriniame reiskinyje yra 0
+Sukurtas naujas adresas [6, 3, 0, 0]
+SUKURTAS TEKSTO OBJEKTAS: >><<
+DO_THE_RIGHT_THING: >>$<<
+Isorinis addresas [6, 3, 0]
+Sis elementas isoriniame reiskinyje yra 1
+Sukurtas naujas adresas [6, 3, 0, 1]
+Su charu sisijes metodas math
+Esamas metacharas yra skirtukas
+sis skirtukas yra vieno symbolio
+
+Parsinu_apgaubta: tekstas matematikoje @-->>$<<@--x+y\mbox{ tai $$ z \times x $$  $a$$b$tekstas} $}
+Atidarantis_reiskinys: $
+Naujo_elemento_adresas: [6, 3, 0, 1]
+Skirtuko_tipas: delimeter
+
+
+>>> [6, 3, 0, 1] ISIJUNGIA PARSINIMO MECHANIZMAS
+>>>VIDINE_SYNTAKSE: M
+DO_THE_RIGHT_THING: >>x<<
+Isorinis addresas [6, 3, 0, 1]
+Sis elementas isoriniame reiskinyje yra 0
+Sukurtas naujas adresas [6, 3, 0, 1, 0]
+SUKURTAS TEKSTO OBJEKTAS: >><<
+DO_THE_RIGHT_THING: >>\<<
+Isorinis addresas [6, 3, 0, 1]
+Sis elementas isoriniame reiskinyje yra 1
+Sukurtas naujas adresas [6, 3, 0, 1, 1]
+Su charu sisijes metodas mcommand
+Esamas metacharas yra komandos pradzia
+Si komanda yra aprasyta syntakseje
+perduodamas_adresas: [6, 3, 0, 1, 1]
+
+
+Pradedu komandos surinkima
+
+
+
+>>>Pradedu_komandos_su_zinomu_paternu_surinkima
+KOMANDA: \mbox
+ESAMA_POZICIJA: x+y\mbox@-->>{<<@-- tai $$ z \times x $$  $a$$b$tekstas} $}
+\end  {e
+Paternas: ('T',)
+Sios komandos adresas [6, 3, 0, 1, 1]
+Pradedu rinkti argumentus:
+ x+y\mbox@-->>{<<@-- tai $$ z \times x $$  $a$$b$tekstas} $}
+\end  {e
+Komandos_Paternas: ('T',)
+Si komanda turi paterna!!!
+ESAME: x+y\mbox@-->>{<<@-- tai $$ z \times x $$  $a$$b$tekstas} $}
+\end  {e
+ieskom pagrindinio argumento:
+ x+y\mbox@-->>{<<@-- tai $$ z \times x $$  $a$$b$tekstas} $}
+\end  {e
+pagrindinio argumento pradzia:
+ x+y\mbox@-->>{<<@-- tai $$ z \times x $$  $a$$b$tekstas} $}
+\end  {e
+Pagrindiniam argumentui perduodamas adresas: [6, 3, 0, 1, 1, 0]
+Pradedamas surinkineti argumentas
+Esamas charas {
+Argumentui priskiriamas adresas [6, 3, 0, 1, 1, 0]
+Sis argumentas turi vidine struktura
+
+Parsinu_apgaubta: x+y\mbox@-->>{<<@-- tai $$ z \times x $$  $a$$b$tekstas} $}
+\end  {e
+Atidarantis_reiskinys: {
+Naujo_elemento_adresas: [6, 3, 0, 1, 1, 0]
+Skirtuko_tipas: delimeter
+
+
+>>> [6, 3, 0, 1, 1, 0] ISIJUNGIA PARSINIMO MECHANIZMAS
+>>>VIDINE_SYNTAKSE: T
+DO_THE_RIGHT_THING: >> <<
+Isorinis addresas [6, 3, 0, 1, 1, 0]
+Sis elementas isoriniame reiskinyje yra 0
+Sukurtas naujas adresas [6, 3, 0, 1, 1, 0, 0]
+SUKURTAS TEKSTO OBJEKTAS: >><<
+DO_THE_RIGHT_THING: >>$<<
+Isorinis addresas [6, 3, 0, 1, 1, 0]
+Sis elementas isoriniame reiskinyje yra 1
+Sukurtas naujas adresas [6, 3, 0, 1, 1, 0, 1]
+Su charu sisijes metodas math
+Esamas metacharas yra skirtukas
+sis skirtukas yra symboliu kombinacija $$
+
+Parsinu_apgaubta:  tai @-->>$<<@--$ z \times x $$  $a$$b$tekstas} $}
+\end  {equatio
+Atidarantis_reiskinys: $$
+Naujo_elemento_adresas: [6, 3, 0, 1, 1, 0, 1]
+Skirtuko_tipas: multichar_delimeter
+
+
+>>> [6, 3, 0, 1, 1, 0, 1] ISIJUNGIA PARSINIMO MECHANIZMAS
+>>>VIDINE_SYNTAKSE: M
+DO_THE_RIGHT_THING: >> <<
+Isorinis addresas [6, 3, 0, 1, 1, 0, 1]
+Sis elementas isoriniame reiskinyje yra 0
+Sukurtas naujas adresas [6, 3, 0, 1, 1, 0, 1, 0]
+SUKURTAS TEKSTO OBJEKTAS: >><<
+DO_THE_RIGHT_THING: >>\<<
+Isorinis addresas [6, 3, 0, 1, 1, 0, 1]
+Sis elementas isoriniame reiskinyje yra 1
+Sukurtas naujas adresas [6, 3, 0, 1, 1, 0, 1, 1]
+Su charu sisijes metodas mcommand
+Esamas metacharas yra komandos pradzia
+Si komanda yra nezinoma
+Sios komandos kunas: \times
+DO_THE_RIGHT_THING: >> <<
+Isorinis addresas [6, 3, 0, 1, 1, 0, 1]
+Sis elementas isoriniame reiskinyje yra 2
+Sukurtas naujas adresas [6, 3, 0, 1, 1, 0, 1, 2]
+SUKURTAS TEKSTO OBJEKTAS: >><<
+
+Vidinio reiskinio ilgis: 12
+Vidinis_reiskinys: >> z \times x <<
+Uzdarantis reiskinys: $$
+Viso reiskinio ilgis: 16
+DO_THE_RIGHT_THING: >> <<
+Isorinis addresas [6, 3, 0, 1, 1, 0]
+Sis elementas isoriniame reiskinyje yra 2
+Sukurtas naujas adresas [6, 3, 0, 1, 1, 0, 2]
+SUKURTAS TEKSTO OBJEKTAS: >><<
+DO_THE_RIGHT_THING: >>$<<
+Isorinis addresas [6, 3, 0, 1, 1, 0]
+Sis elementas isoriniame reiskinyje yra 3
+Sukurtas naujas adresas [6, 3, 0, 1, 1, 0, 3]
+Su charu sisijes metodas math
+Esamas metacharas yra skirtukas
+sis skirtukas yra vieno symbolio
+
+Parsinu_apgaubta:  tai $$ z \times x $$  @-->>$<<@--a$$b$tekstas} $}
+\end  {equation}
+teksto pabaiga 
+Atidarantis_reiskinys: $
+Naujo_elemento_adresas: [6, 3, 0, 1, 1, 0, 3]
+Skirtuko_tipas: delimeter
+
+
+>>> [6, 3, 0, 1, 1, 0, 3] ISIJUNGIA PARSINIMO MECHANIZMAS
+>>>VIDINE_SYNTAKSE: M
+DO_THE_RIGHT_THING: >>a<<
+Isorinis addresas [6, 3, 0, 1, 1, 0, 3]
+Sis elementas isoriniame reiskinyje yra 0
+Sukurtas naujas adresas [6, 3, 0, 1, 1, 0, 3, 0]
+SUKURTAS TEKSTO OBJEKTAS: >><<
+
+Vidinio reiskinio ilgis: 1
+Vidinis_reiskinys: >>a<<
+Uzdarantis reiskinys: $
+Viso reiskinio ilgis: 3
+DO_THE_RIGHT_THING: >>$<<
+Isorinis addresas [6, 3, 0, 1, 1, 0]
+Sis elementas isoriniame reiskinyje yra 4
+Sukurtas naujas adresas [6, 3, 0, 1, 1, 0, 4]
+Su charu sisijes metodas math
+Esamas metacharas yra skirtukas
+sis skirtukas yra vieno symbolio
+
+Parsinu_apgaubta:  tai $$ z \times x $$  $a$@-->>$<<@--b$tekstas} $}
+\end  {equation}
+teksto pabaiga 
+\i
+Atidarantis_reiskinys: $
+Naujo_elemento_adresas: [6, 3, 0, 1, 1, 0, 4]
+Skirtuko_tipas: delimeter
+
+
+>>> [6, 3, 0, 1, 1, 0, 4] ISIJUNGIA PARSINIMO MECHANIZMAS
+>>>VIDINE_SYNTAKSE: M
+DO_THE_RIGHT_THING: >>b<<
+Isorinis addresas [6, 3, 0, 1, 1, 0, 4]
+Sis elementas isoriniame reiskinyje yra 0
+Sukurtas naujas adresas [6, 3, 0, 1, 1, 0, 4, 0]
+SUKURTAS TEKSTO OBJEKTAS: >><<
+
+Vidinio reiskinio ilgis: 1
+Vidinis_reiskinys: >>b<<
+Uzdarantis reiskinys: $
+Viso reiskinio ilgis: 3
+DO_THE_RIGHT_THING: >>t<<
+Isorinis addresas [6, 3, 0, 1, 1, 0]
+Sis elementas isoriniame reiskinyje yra 5
+Sukurtas naujas adresas [6, 3, 0, 1, 1, 0, 5]
+SUKURTAS TEKSTO OBJEKTAS: >><<
+
+Vidinio reiskinio ilgis: 36
+Vidinis_reiskinys: >> tai $$ z \times x $$  $a$$b$tekstas<<
+Uzdarantis reiskinys: }
+Viso reiskinio ilgis: 38
+Komanda baigta parsinti taske:
+ x+y\mbox{ tai $$ z \times x $$  $a$$b$tekstas}@-->> <<@--$}
+\end  {equation}
+teksto pabaiga 
+\iffalse   $ 
+DO_THE_RIGHT_THING: >> <<
+Isorinis addresas [6, 3, 0, 1]
+Sis elementas isoriniame reiskinyje yra 2
+Sukurtas naujas adresas [6, 3, 0, 1, 2]
+SUKURTAS TEKSTO OBJEKTAS: >><<
+
+Vidinio reiskinio ilgis: 47
+Vidinis_reiskinys: >>x+y\mbox{ tai $$ z \times x $$  $a$$b$tekstas} <<
+Uzdarantis reiskinys: $
+Viso reiskinio ilgis: 49
+
+Vidinio reiskinio ilgis: 70
+Vidinis_reiskinys: >>tekstas matematikoje $x+y\mbox{ tai $$ z \times x $$  $a$$b$tekstas} $<<
+Uzdarantis reiskinys: }
+Viso reiskinio ilgis: 72
+Komanda baigta parsinti taske:
+ $x+y\mbox{ tai $$ z \times x $$  $a$$b$tekstas} $}@-->>
+<<@--\end  {equation}
+teksto pabaiga 
+\iffalse   $ {  
+DO_THE_RIGHT_THING: >>
+<<
+Isorinis addresas [6]
+Sis elementas isoriniame reiskinyje yra 4
+Sukurtas naujas adresas [6, 4]
+SUKURTAS TEKSTO OBJEKTAS: >><<
+
+Vidinio reiskinio ilgis: 98
+Vidinis_reiskinys: >>
+%%%%%%%%%%%%
+c+b+d
+\mbox{tekstas matematikoje $x+y\mbox{ tai $$ z \times x $$  $a$$b$tekstas} $}
+<<
+Uzdarantis reiskinys: \end  {equation}
+Viso reiskinio ilgis: 144
+DO_THE_RIGHT_THING: >>
+<<
+Isorinis addresas []
+Sis elementas isoriniame reiskinyje yra 7
+Sukurtas naujas adresas [7]
+SUKURTAS TEKSTO OBJEKTAS: >><<
+DO_THE_RIGHT_THING: >>\<<
+Isorinis addresas []
+Sis elementas isoriniame reiskinyje yra 8
+Sukurtas naujas adresas [8]
+Su charu sisijes metodas tcommand
+Esamas metacharas yra switchas
+
+Parsinu_apgaubta: a$$b$tekstas} $}
+\end  {equation}
+teksto pabaiga 
+@-->>\<<@--iffalse   $ {     \begin       \fi \[ display mat
+Atidarantis_reiskinys: \iffalse
+Naujo_elemento_adresas: [8]
+Skirtuko_tipas: switch
+
+
+>>> [8] ISIJUNGIA PARSINIMO MECHANIZMAS
+>>>VIDINE_SYNTAKSE: V
+DO_THE_RIGHT_THING: >> <<
+Isorinis addresas [8]
+Sis elementas isoriniame reiskinyje yra 0
+Sukurtas naujas adresas [8, 0]
+SUKURTAS TEKSTO OBJEKTAS: >><<
+DO_THE_RIGHT_THING: >>\<<
+Isorinis addresas [8]
+Sis elementas isoriniame reiskinyje yra 1
+Sukurtas naujas adresas [8, 1]
+Su charu sisijes metodas vcommand
+Radau komanda verbatimineje aplinkoje!
+Jos ilgis 6
+Komanda: \begin
+DO_THE_RIGHT_THING: >> <<
+Isorinis addresas [8]
+Sis elementas isoriniame reiskinyje yra 2
+Sukurtas naujas adresas [8, 2]
+SUKURTAS TEKSTO OBJEKTAS: >><<
+
+Vidinio reiskinio ilgis: 24
+Vidinis_reiskinys: >>   $ {     \begin       <<
+Uzdarantis reiskinys: \fi
+Viso reiskinio ilgis: 35
+DO_THE_RIGHT_THING: >> <<
+Isorinis addresas []
+Sis elementas isoriniame reiskinyje yra 9
+Sukurtas naujas adresas [9]
+SUKURTAS TEKSTO OBJEKTAS: >><<
+DO_THE_RIGHT_THING: >>\<<
+Isorinis addresas []
+Sis elementas isoriniame reiskinyje yra 10
+Sukurtas naujas adresas [10]
+Su charu sisijes metodas tcommand
+Esamas metacharas yra switchas
+
+Parsinu_apgaubta: ksto pabaiga 
+\iffalse   $ {     \begin       \fi @-->>\<<@--[ display matematika \iffalse \] \fi \] 
+
+Atidarantis_reiskinys: \[
+Naujo_elemento_adresas: [10]
+Skirtuko_tipas: switch
+
+
+>>> [10] ISIJUNGIA PARSINIMO MECHANIZMAS
+>>>VIDINE_SYNTAKSE: M
+DO_THE_RIGHT_THING: >> <<
+Isorinis addresas [10]
+Sis elementas isoriniame reiskinyje yra 0
+Sukurtas naujas adresas [10, 0]
+SUKURTAS TEKSTO OBJEKTAS: >><<
+DO_THE_RIGHT_THING: >>\<<
+Isorinis addresas [10]
+Sis elementas isoriniame reiskinyje yra 1
+Sukurtas naujas adresas [10, 1]
+Su charu sisijes metodas mcommand
+Esamas metacharas yra switchas
+
+Parsinu_apgaubta:  display matematika @-->>\<<@--iffalse \] \fi \] 
+
+Atidarantis_reiskinys: \iffalse
+Naujo_elemento_adresas: [10, 1]
+Skirtuko_tipas: switch
+
+
+>>> [10, 1] ISIJUNGIA PARSINIMO MECHANIZMAS
+>>>VIDINE_SYNTAKSE: V
+DO_THE_RIGHT_THING: >> <<
+Isorinis addresas [10, 1]
+Sis elementas isoriniame reiskinyje yra 0
+Sukurtas naujas adresas [10, 1, 0]
+SUKURTAS TEKSTO OBJEKTAS: >><<
+DO_THE_RIGHT_THING: >>\<<
+Isorinis addresas [10, 1]
+Sis elementas isoriniame reiskinyje yra 1
+Sukurtas naujas adresas [10, 1, 1]
+Su charu sisijes metodas vcommand
+Radau komanda verbatimineje aplinkoje!
+Jos ilgis 2
+Komanda: \]
+DO_THE_RIGHT_THING: >> <<
+Isorinis addresas [10, 1]
+Sis elementas isoriniame reiskinyje yra 2
+Sukurtas naujas adresas [10, 1, 2]
+SUKURTAS TEKSTO OBJEKTAS: >><<
+
+Vidinio reiskinio ilgis: 4
+Vidinis_reiskinys: >> \] <<
+Uzdarantis reiskinys: \fi
+Viso reiskinio ilgis: 15
+DO_THE_RIGHT_THING: >> <<
+Isorinis addresas [10]
+Sis elementas isoriniame reiskinyje yra 2
+Sukurtas naujas adresas [10, 2]
+SUKURTAS TEKSTO OBJEKTAS: >><<
+
+Vidinio reiskinio ilgis: 36
+Vidinis_reiskinys: >> display matematika \iffalse \] \fi <<
+Uzdarantis reiskinys: \]
+Viso reiskinio ilgis: 40
+DO_THE_RIGHT_THING: >> <<
+Isorinis addresas []
+Sis elementas isoriniame reiskinyje yra 11
+Sukurtas naujas adresas [11]
+SUKURTAS TEKSTO OBJEKTAS: >><<
+****PARSINIMO PABAIGA**** []
+--v
+PRADZIA <-- PRADZIA
+  [
+tebunie taip ] <-- text
+  \mbox <--Komanda: text
+  ---------- 1-as argumentas
+      --v
+      { <-- delimeter
+      [vidinis argumentas] <-- text
+      } <-- delimeter
+      --^
+  --------------------
+  [  ] <-- text
+  --v
+  $ <-- delimeter
+    [ pirmoji matematika ] <-- text
+  $ <-- delimeter
+  --^
+  [  
+] <-- text
+  [% tai yra komentaras
+] <-- comment
+  --v
+  \begin
+%%%%%%%%%%%%
+{equation} <-- enviroment
+    [
+] <-- text
+    [%%%%%%%%%%%%
+] <-- comment
+    [c+b+d
+] <-- text
+    \mbox <--Komanda: text
+    ---------- 1-as argumentas
+        --v
+        { <-- delimeter
+        [tekstas matematikoje ] <-- text
+        --v
+        $ <-- delimeter
+          [x+y] <-- text
+          \mbox <--Komanda: text
+          ---------- 1-as argumentas
+              --v
+              { <-- delimeter
+              [ tai ] <-- text
+              --v
+              $$ <-- multichar_delimeter
+                [ z ] <-- text
+                \times <--Komanda: unknown
+                [ x ] <-- text
+              $$ <-- multichar_delimeter
+              --^
+              [  ] <-- text
+              --v
+              $ <-- delimeter
+                [a] <-- text
+              $ <-- delimeter
+              --^
+              --v
+              $ <-- delimeter
+                [b] <-- text
+              $ <-- delimeter
+              --^
+              [tekstas] <-- text
+              } <-- delimeter
+              --^
+          --------------------
+          [ ] <-- text
+        $ <-- delimeter
+        --^
+        } <-- delimeter
+        --^
+    --------------------
+    [
+] <-- text
+  \end  {equation} <-- enviroment
+  --^
+  [
+teksto pabaiga 
+] <-- text
+  --v
+  \iffalse <-- switch
+    [   $ {     ] <-- text
+    [\begin] <-- verbatim_text
+    [       ] <-- text
+  \fi <-- switch
+  --^
+  [ ] <-- text
+  --v
+  \[ <-- switch
+    [ display matematika ] <-- text
+    --v
+    \iffalse <-- switch
+      [ ] <-- text
+      [\]] <-- verbatim_text
+      [ ] <-- text
+    \fi <-- switch
+    --^
+    [ ] <-- text
+  \] <-- switch
+  --^
+  [ ] <-- text
+PRADZIA <-- PRADZIA
+--^
+
+In [64]: 
