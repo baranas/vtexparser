@@ -1052,7 +1052,7 @@ def parse_wraped(poz,String,syntax,opening,len,address):
 #     {verbatim}   bbb \\end {verbatim}  aaaa  \\end{equation}   
 #      '''
 
-test="tebunie taip \\mbox{vidinis argumentas}    aaa"
+test="tebunie taip  \\mbox{vidinis $matematika$  \\iffalse $ \\fi  argumentas}    aaa"
 
 objektas=parse(test,'T')
 
