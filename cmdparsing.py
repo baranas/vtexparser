@@ -1,3 +1,4 @@
+# -*- coding: utf-8 -*-
 '''Modulis, kuriame aprasytas metodas surenkantis komanda ir jos argumentus, priklausomai,
 nuo komandos tipo ir jos patterno apibrezto texsyntax modulyje.
 
@@ -88,7 +89,7 @@ def context(poz,String,End=False,Range=50,Tag=False,Delim=False):
               ######################################## 
               ####         PARSINIMO METU         ####
               ##     INICIALIZUOJAMI OBJEKTAI       ##
-
+              
               ######################################## 
               ####      OBJEKTU KOMPONENTAI       ####
 
@@ -99,14 +100,14 @@ class Opening:
         self.name=Name
         self.body=Body
     def show_self(self):
-        print(self.body,'<--',self.Type)
+        print('▼----------------------['+self.Type+':'+repr(self.body)+']')
 
 class Closing(Opening):
     def __init__(self,Tipas,Name,Body):
         super().__init__(Tipas,Name,Body)
-        
-
-              
+    def show_self(self):
+       print('▲----------------------['+self.Type+':'+repr(self.body)+']')
+                      
               ######################################## 
               ####         PATYS OBJEKTAI         ####
               
@@ -129,15 +130,11 @@ class FruitfullObject(ParseObject):
         self.address=[]
     def show_self(self):
         print('  '*len(self.address),end='')
-        print('--v') 
-        print('  '*len(self.address),end='')
         self.opening.show_self()
         for i in self.kids:
             i.show_self()
         print('  '*len(self.address),end='')
         self.closing.show_self()
-        print('  '*len(self.address),end='')
-        print('--^')         
 
 class SimpleStructure(ParseObject):
     def __init__(self,tipas):
@@ -146,7 +143,7 @@ class SimpleStructure(ParseObject):
         self.address=[]
     def show_self(self):
         print('  '*len(self.address),end='') 
-        print('['+self.fulltext+']','<--',self.Type)
+        print('['+self.Type+':'+repr(self.fulltext)+']')
         
 class Command(ParseObject):
     '''Komanda su argumentais.
@@ -163,14 +160,11 @@ class Command(ParseObject):
         print(self.name,'<--Komanda:',self.Type)
         for i,arg in enumerate(self.args):
             print('  '*len(self.address),end='') 
-            print('-'*10,str(i+1)+'-as argumentas')
+            print('♣'+'-'*10,str(i+1)+'-as argumentas')
             arg.show_self()
             print('  '*len(self.address),end='') 
-            print('-'*20)
+            print('♣'+'-'*20)
             
- 
-
-
               ######################################## 
               ####   IPRASTI METODAI NAUDOJAMI    ####
               ##         PARSINIMO PROCESE          ##
@@ -588,6 +582,8 @@ def identify_opening(opening,syntax='T'):
     MCH_DELIMS=latexsyntax.SYNTAX[syntax]['mch_delims']
     SWITCHES=latexsyntax.SYNTAX[syntax]['switches']
     ENVIROMENTS=latexsyntax.SYNTAX[syntax]['enviroments']
+    # Blokas: tabuliaro skirtukas (\\) row skirtukas & item skirtukas \\item 
+    BLOCKS=''
     if opening in DELIMS.keys():
         return lambda poz, String:\
            check_matching_delim(poz,String,syntax,opening), 'delimeter'
@@ -647,20 +643,51 @@ def collect_argument(poz,String,syntax,address):
     if String[poz] in braces.keys():
         print("Sis argumentas turi vidine struktura")
         Object, lenght=parse_wraped(poz,String,syntax,String[poz],1,address)
+        Object.Type='arg_complex'
         return Object, lenght
     cmd_start=latexsyntax.SYNTAX[syntax]['cmd_start']
     if String[poz] in cmd_start.keys():
         print("Sis argumentas yra komandos tipo")
         Argumentas, lenght=collect_command(poz,String,syntax,address)
         Argumentas.body=String[poz:poz+lenght]
+        Argumentas.Type='arg_cmd'
         return Argumentas, lenght
     else:
         print("Sis argumentas yra tiesiog symbolis")
         Argumentas=ParseObject('symbol')
         Argumentas.body=String[poz]
         Argumentas.address=new_address
+        Argumentas.Type='arg_symb'
         return Argumentas, 1
 
+def collect_optional_argument(poz,String,syntax):
+    '''Surenka opcionalu argumenta.
+    Grazina paprastos strukturos objekta.'''
+    delims=latexsyntax.SYNTAX[syntax]['odelims']
+    if not String[poz] in delims.keys():
+        raise AlgError("Esamas symbolis nera opcionalaus"\
+                       "argumento pradzia:"\
+                       "\n{}".format(context(poz,String)),poz)
+    left=String[poz]
+    right=delims[String[poz]]
+    braces=[1,0]
+    i=poz+1
+    while braces[0]!=braces[1]:
+        if String[i]==left: braces[0]+=1
+        elif String[i]==right: braces[1]+=1
+        if  EOS(i,String):
+            raise MatchError(
+                'Nerasta skliausto pora!:\n{}'.format(
+                context(poz,String)),poz)
+        i+=1
+    Opcionalus_argumentas=SimpleStructure('opt_arg')
+    Opcionalus_argumentas.fulltext=String[poz:i]
+    return Opcionalus_argumentas, i-poz
+        
+oarg, ilg=collect_optional_argument(1,' [aaaa[aaaaaa]aaaaa]   ','T')
+    
+    
+    
 def skip_braced(poz,String,
                 meta=True,
                 verb=False,
@@ -746,7 +773,9 @@ def collect_command(poz,String,syntax,address):
     # susirenkam zvaigzdute
     # ji atsiskiria nuo komandos kaip ir argumentas
     if Komandos_pav[-1:]!='*':
+        print("ieskom zvaigzdutes")
         ilg=skip_till_argument(i,String)
+        print("Tiriam:",context(i,String))
         if String[i+ilg]=='*':
             Komandos_pav=Komandos_pav+'*'
             i+=ilg+1
@@ -768,9 +797,9 @@ def collect_command(poz,String,syntax,address):
         for nr,k in enumerate(pattern):
             # jei argumentas pagrindinis
             # 1 ir didzioji raide reprezentuoja pagrindini argumenta
-            if k.isupper() or k!=0:
+            if  (type(k)==int and k==1) or (type(k)==str and  k.isupper()):
                 # jei argumento syntakse nenurodyta
-                if k.isdigit():
+                if type(k)==int:
                     inner_syntax=syntax
                 else:
                     inner_syntax=k
@@ -782,8 +811,10 @@ def collect_command(poz,String,syntax,address):
                       context(i,String))
                 arg_address=address+[argument_nr]
                 argument_nr+=1
-                print("Pagrindiniam argumentui perduodamas adresas:",arg_address)
-                argument, lenght=collect_argument(i,String,inner_syntax,arg_address)
+                print("Pagrindiniam argumentui perduodamas adresas:",
+                      arg_address)
+                argument, lenght=collect_argument(i,String,inner_syntax,
+                                                  arg_address)
                 argument.address.append(arg_address)
                 argument.lenght=lenght
                 command.args.append(argument)
@@ -791,20 +822,19 @@ def collect_command(poz,String,syntax,address):
             # jei argumentas opcionalus 
             else:
                 print("Pradedamas surinkineti opcionalus argumentas")
+                odelims=latexsyntax.SYNTAX[syntax]['odelims']
                 ilg=skip_till_argument(i,String)
-                if String[i+ilg]=='[':
+                if String[i+ilg] in odelims.keys():
                     print("Rastas opcionalus argumentas")
                     print("opcionalus:",context(i,String))
-                    i+=ilg
-                    k=skip_braced(i,String,left='[',right=']')
-                    new_address=address.append(elem)
-                    elem+=1
-                    argument=Argument(syntax)
-                    argument.body=String[i:i+k]
-                    argument.address=new_address
-                    i+=k
+                    arg_address=address+[argument_nr]
+                    argument_nr+=1
+                    argument, lenght=collect_optional_argument(i,String,syntax)
+                    argument.address.append(arg_address)
+                    argument.lenght=lenght
+                    command.args.append(argument)
+                    i+=lenght
                 else:
-                    args.append(None)
                     pass
     print("Komanda baigta parsinti taske:\n",context(i,String))
     command.fulltext=String[poz:i]
@@ -1088,6 +1118,29 @@ def parse_wraped(poz,String,syntax,opening,len,address):
 #      '''
 
 test='''
+\\documentclass[12pt]{article}
+
+\\begin{document}
+\\section                  *               
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+    {Gilus parsinimas}%+++++
+%----------------------------
+Parse medis teoriskai gali buti begalinis
+\\begin{equation}
+%%%%%%%%%%%%% $
+\\frac{ \\mbox{arg\,max $f(\\mbox{sup $x$})$}}
+{\\mbox{denominator as $ x+\\iffalse \\alpha + \\beta \\fi y$}}
+\end{equation}
+
+TeX'iniai skliaustai yra ypatingos svarbos 
+{kiekvienas reiskinys {skliaustuose {susirenka isorines {savybes 
+{ir gali {tureti tik savo individualias}}}}}}. 
+
+Butinos parsinimo salygos:
+\\begin{itemize}
+\\item visi \TeX{}'iniai skliaustai turi buti suporuoti
+\\end{itemize}
+
 tebunie taip \\mbox{vidinis argumentas}  $ pirmoji matematika $  
 % tai yra komentaras
 \\begin
@@ -1095,10 +1148,13 @@ tebunie taip \\mbox{vidinis argumentas}  $ pirmoji matematika $
 {equation}
 %%%%%%%%%%%%
 c+b+d
-\\mbox{tekstas matematikoje $x+y\\mbox{ tai $$ z \\times x $$  $a$$b$tekstas} $}
+\\mbox{tekstas matematikoje $x+y\\mbox{ tai $$ z \\times{aaaa} x $$  $a$$b$tekstas} $}
 \\end  {equation}
 teksto pabaiga 
 \\iffalse   $ {     \\begin       \\fi \\[ display matematika \\iffalse \\] \\fi \\] 
+\\end{document}
+
+
 '''
 
 print()

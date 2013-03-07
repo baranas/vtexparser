@@ -134,6 +134,10 @@ T_COMMANDS={
               'pattern':(0,1),
               'type':'syntax'
               },
+          '\\documentclass':{
+              'pattern':(0,1),
+              'type':'dokumento_klase'
+              },
           '\\rule':{
               'pattern':(0,1,1),
               'type':'maketas'
@@ -204,7 +208,12 @@ T_COMMANDS={
               },
           '\\textbackslash':{
               'pattern':None,
-              'type':'tsymbol'}}
+              'type':'tsymbol'
+              },
+        '\\frac':{
+              'pattern':('M','M'),
+              'type':'math_fraction'
+              }}
 
 # MATEMATINES MODOS KOMANDOS 
 M_COMMANDS={'\\frac':{
@@ -242,26 +251,35 @@ ENVIROMENTS={'equation':{
                  'pattern':(0,),
                  'content':'M'
                  },
+             'document':{
+                 'pattern':(0,),
+                 'content':'T'
+                 },
              'pf':{
                  'pattern':(0,),
-                 'syntax':'T'
+                 'content':'T'
                  },
              'pf*':{
                  'pattern':(1,),
-                 'syntax':'T'
+                 'content':'T'
                  },
              'verbatim':{
                  'pattern':None,
-                 'syntax':'V',
+                 'content':'V',
                  'content':'M'
                  },
              'comment':{
                  'pattern':None,
-                 'syntax':'V'
+                 'content':'V'
                  },
              'listing':{
                  'pattern':None,
-                 'syntax':'V'}}
+                 'content':'V'
+                 },
+             'itemize':{
+                 'pattern':(0),
+                 'content':'T',
+                 'content':'T'}}
 
 SWITCHES={'\\iffalse':{
                'closing':'\\fi',
@@ -282,6 +300,12 @@ SWITCHES={'\\iffalse':{
               },
           '\\[':{
               'closing':'\\]',
+              'content':'M',
+              'type':'dmath',
+              'properties':[]
+              },
+        '\\begingroup':{
+              'closing':'\\endgroup',
               'content':'M',
               'type':'dmath',
               'properties':[]
@@ -345,7 +369,18 @@ MULTICHAR_DELIMS={'$$':{
                       'content':'O'
                        }}
 
+BLOCKS={'&':{
+          'ending':'&'
+          'content':'T'
+        },
+        '\\item':{
+            'ending':'\\item'
+            }}
+            
+
 ARG_DELIMS={'{':['}','meta']}
+
+ODELIMS={'[':']'}
 
 # SKIRTUKAI APGAUBIANTYS PAGRINDINI ARGUMENTA
 
@@ -357,6 +392,10 @@ ARGUMENT=set(string.ascii_letters+string.digits)
 BEGIN_OF_ARG=ARGUMENT
 BEGIN_OF_ARG.update(set(START_OF_CMD.keys()))
 BEGIN_OF_ARG.update(set(ARG_DELIMS.keys()))
+# zvaigzdutes surinkimas
+BEGIN_OF_ARG.update('*')
+BEGIN_OF_ARG.update(ODELIMS.keys())
+
 
 ########################################
 ####################  SYNTAKSES
@@ -377,6 +416,7 @@ SYNTAX={
           'enviroments':ENVIROMENTS,
           'mbraces':ARG_DELIMS,
           'delims':DELIMS,
+          'odelims':ODELIMS,
           'mch_delims':MULTICHAR_DELIMS,
           'arg_beg':BEGIN_OF_ARG,
           'switches':SWITCHES},

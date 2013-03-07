@@ -1,11 +1,21 @@
 * Savokos
 - Syntakse -- funkcija siejanti aktyvius symbolius ir parsinimo metodus
+- Dinamine syntakse:
+  1. TeX kalbos syntakses dinamiskumas pasireiskia:
+     * Galimybe perapibrezti naudojamu komandiniu vardu reiksmes:
+       (\renewcommand)
+     * Galimybe perapibrezti (naujai apibrezti)  aktyvius symbolius
+       (\begin{Verbatim}[commentchar=#])
+     * Syntakse keiciasi priklausomai, nuo reiskinio tipo:
+       (matematika, tekstas, komentaras, verbatimas, index)
+       
 - Parsinimo metodas -- algoritmas surenkantis visa LaTeX skripto reiskini, kuris
   parsinimo metu isskiriamas is bendro konteksto.
 - Reiskinys -- LaTeX skripto objektas turintis vidine struktura.
   Reiskiniu tipai:
-  * Paprastos strukturos reiskiniai -- reiskiniai neturintys sudetingos ar
-    strukturos ir savo atskiros syntakses (inline komentarai, inline_verbatimai, tekstas)
+  * Paprastos strukturos reiskiniai -- reiskiniai neturintys sudetingos 
+    strukturos ir savo atskiros syntakses
+    (inline komentarai, inline_verbatimai, tekstas)
   * Gilios strukturos reiskiniai -- reiskiniai galintys tureti savo atskira syntakse,
     ju struktura gali sudaryti kiti paprastos arba gilios strukturos reiskiniai.
     Taip pat turintys skirtukus, skriptiniame faile isskiriancius juos is isorinio 
@@ -23,30 +33,35 @@
        
    Funkcija parse, savo veikimo metu su savimi nesasi:
    - parsinamo reiskinio syntakse.
-     tabular tipo objekte & -> kolonos skirtukas
+     tabular tipo objekte & -> atskiro tekstinio objekto skirtukas
      tekstiniame objekte $ -> matematinio reiksinio pradzia
      matematiniame reiskinyje $ -> matematinio reiskinio pabaiga
      verbatiminiame reiskinyje % -> symbolis
      tekstiniame reikinyje % -> komentaro pradzia 
      index argumente % -> dar kita reiksme ir t.t.
-   - nuoroda i parsinama eilute
+   - nuoroda i parsinama skripta ir esama pozicija.
    - parsinimo objekta priklausanti esamam reiskiniui ir kuriama parsinimo metu.
      Objektu pavyzdziai:
      + inline matematika =...$ a + b $...=
      + apskliaustas reiskinys =...{ tekstas }...=
-       -- gali buti komandos argumentas, arba siaip apskliaustas
-       reiskinys
-     + 
+       -- gali buti komandos argumentas, arba tiesiog apskliaustas
+       reiskinys 
+     + enviromentas =...\begin{equation} ... \end{equation}...=
    - uzdarymo ieskanti algoritma
 
 *** Algoritmas 
     1) Tikrinama ar esamas reiskinys neuzdaromas, jei taip:
-       - grazinamas pilnas reiskinys (a) =objekto pavidalu= (reiskinys) su suparsintu turiniu 
-	 ir sio (b) =objekto skriptines reprezentacijos ilgis=, 
+       - grazinamas pilnas reiskinys
+	 (a) =objekto pavidalu= (reiskinys) su suparsintu turiniu 
+	 ir sio 
+	 (b) =objekto skriptines reprezentacijos ilgis=, 
 	 (c) =objekta uzdarancio reiskinio ilgis=
        jei ne:
-       - kreipiamasi i funkcija =do_the_right_thing= perduodant esama =syntakse=, 
-	 =nuoroda i esama objekta=,  =nuoroda i tiriama symboli=.
+       - kreipiamasi i funkcija 
+	 =do_the_right_thing= perduodant esama 
+	 (a) =syntakse=, 
+	 (b) =nuoroda i esama objekta=,  
+	 (c) =nuoroda i tiriama symboli=.
     2) =do_the_right_thing= funkcijos pagrindines uzduotys:
        - atpazinti ar symbolis i kuri ziurima yra aktyvus ar ne
        - jei esamas symbolis neaktyvus tai surinkti visa nuosekliai einancia neaktyviu
@@ -59,4 +74,13 @@
     4) =do_the_right_thing= grazina =parse= procesui =ilgi surinkto objekto=,
        kad nusokti i koordinate uz surinkto objekto ir prideda
        surinkta vidini objekta prie =parse= kuriamo objekto.
+       
 
+
+*** 
+* TODO Numatomi procesai
+** Kaip texo kompiliatorius turiu pagauti ne ten irasyta \end{env}
+** Pasiimti aplinkos pradzia ir nestis, jei rasta kitokia aplinkos pabaiga saukti
+** ParseWraped 
+   * Tabular &|... |$
+   * itemize \\item \\item  
