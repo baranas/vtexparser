@@ -1,0 +1,11 @@
+tebunie taip \mbox{vidinis argumentas}  $ pirmoji matematika $  
+% tai yra komentaras
+\begin
+%%%%%%%%%%%%
+{equation}
+%%%%%%%%%%%%
+c+b+d
+\mbox{tekstas matematikoje $x+y\mbox{ tai $$ z \times x $$  $a$$b$tekstas} $}
+\end  {equation}
+teksto pabaiga 
+\iffalse   $ {     \begin       \fi \[ display matematika \iffalse \] \fi \] 
