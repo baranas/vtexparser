@@ -574,6 +574,10 @@ def check_matching_multichar_delim(poz,String,syntax,opening):
         if String[poz:poz+len(closing)]==closing:
             return len(closing)
 
+def check_end_of_block(poz,String,syntax,opening):
+            
+        
+        
 def identify_opening(opening,syntax='T'):
     '''Parenka parsinamo reiskinio 
     uzdarymo mechanizma atpazystanti metoda.
@@ -1117,10 +1121,6 @@ def parse_wraped(poz,String,syntax,opening,len,address):
 #     {verbatim}   bbb \\end {verbatim}  aaaa  \\end{equation}   
 #      '''
 
-<<<<<<< HEAD
-test="tebunie taip  \\mbox{vidinis $matematika$  \\iffalse $ \\fi  argumentas}    aaa"
-
-=======
 test='''
 \\documentclass[12pt]{article}
 
@@ -1130,7 +1130,9 @@ test='''
     {Gilus parsinimas}%+++++
 %----------------------------
 Parse medis teoriskai gali buti begalinis
-\\begin{equation}
+\\begin
+%ĮĮĮĮĮĮĮĮĮĮĮĮĮĮĮĮĮĮĮĮĮ
+{equation}
 %%%%%%%%%%%%% $
 \\frac{ \\mbox{arg\,max $f(\\mbox{sup $x$})$}}
 {\\mbox{denominator as $ x+\\iffalse \\alpha + \\beta \\fi y$}}
@@ -1163,7 +1165,6 @@ teksto pabaiga
 
 print()
 print()
->>>>>>> c30498d252744922f97fc48bf1a7b77398b07def
 objektas=parse(test,'T')
 objektas.show_self()
 

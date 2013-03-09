@@ -370,7 +370,7 @@ MULTICHAR_DELIMS={'$$':{
                        }}
 
 BLOCKS={'&':{
-          'ending':'&'
+          'ending':'&',
           'content':'T'
         },
         '\\item':{
