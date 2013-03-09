@@ -243,7 +243,6 @@ M_COMMANDS={'\\frac':{
 # \def{\be}{\begin}
 ENV_SWITCH={'\\begin':'\\end'}
                        
-
 ############### ENVIROMENTU PATERNAI IR TIPAI
 # PIRMAS ARGUMENTAS NURODO PATERNA
 # ANTRAS NURODO TURINIO SYNTAKSE
@@ -311,7 +310,6 @@ SWITCHES={'\\iffalse':{
               'properties':[]
               }}
          
-
 ############### KOMENTARAI
 
 # NUMATANT SINTAKSES KEITIMA
@@ -374,9 +372,17 @@ BLOCKS={'&':{
           'content':'T'
         },
         '\\item':{
-            'ending':'\\item'
+            'ending':'\\item',
+            'content':'\\item'
             }}
-            
+
+TABULAR_BLOCKS={'\\\\':{
+                  'ending':'\\\\',
+                  'content':'R'
+                  }}
+ROW_BLOCKS={}
+
+# ITEMIZE_BLOCKS={'\\item':{
 
 ARG_DELIMS={'{':['}','meta']}
 
