@@ -107,3 +107,12 @@ x & y & z \\
 e & f & g 
 \end{tabular}
 #+end_src
+
+** Kaip uzdaryti visus reiskinius
+zinau, kad esu bloke
+tikrinimas susideda is 2 daliu
+tikrinu ar neuzsidare blokas
+tikrinu ar neuzsidare isorinis reiskinys
+
+
+** Zinutes

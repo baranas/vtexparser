@@ -213,7 +213,15 @@ T_COMMANDS={
         '\\frac':{
               'pattern':('M','M'),
               'type':'math_fraction'
-              }}
+              },
+        '\\it':{
+              'pattern':None,
+              'type':'group_switch',
+              'group_switch_type':'font'},
+        '\\item':{
+              'pattern':(0),
+              'type':'start_of_block',
+              'block_type':'itemize'}}
 
 # MATEMATINES MODOS KOMANDOS 
 M_COMMANDS={'\\frac':{

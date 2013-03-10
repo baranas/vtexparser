@@ -1,0 +1,18 @@
+
+#+begin_src plantuml :file aggregation.png
+class sachmatu_lenta
+sachmatu_lenta o-- figuros
+sachmatu_lenta *-- pozicijos
+#+end_src
+
+  #+begin_src plantuml :file inheritance.png
+  class Sachmatu_Figura
+  Sachmatu_Figura : spalva
+  Sachmatu_Figura : kuriam_rinkiniui_priklauso[] rinkinys
+  Rikis --|> Sachmatu_Figura
+  Rikis : forma
+  Rikis : judejimas()
+  Bokstas --|> Sachmatu_Figura
+  Bokstas : forma
+  Bokstas : judejimas()
+  #+end_src
