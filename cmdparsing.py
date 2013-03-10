@@ -100,7 +100,8 @@ class Opening:
         self.name=Name
         self.body=Body
     def show_self(self):
-        print('▼----------------------['+self.Type+':'+repr(self.body)+']')
+        print('▼----------------------['+self.Type+':'+repr(self.body)+']'\
+              '<<father_address:'+str(self.father.address)+'>>')
 
 class Closing(Opening):
     def __init__(self,Tipas,Name,Body):
@@ -117,6 +118,7 @@ class ParseObject():
         self.body=''                      # skriptinio pavidalo kunas
         self.Type=tipas
 
+
 class FruitfullObject(ParseObject):
     '''Objektas turintis vidine struktura, sudaryta 
     is kitu objektu. Jis taip pat savyje turi opening 
@@ -125,34 +127,54 @@ class FruitfullObject(ParseObject):
         super().__init__(tipas)
         self.kids=[]             # vidine struktura
         # butinas atidarantis reiskinys
+        self.address=[]
+    def show_self(self):
+        print('  '*len(self.address),end='')
+        for i in self.kids:
+            i.show_self()
+        
+class Group(ParseObject):
+    '''Objektas turintis vidine struktura, sudaryta 
+    is kitu objektu. Jis taip pat savyje turi opening 
+    ir closing objektus.'''
+    def __init__(self,tipas):
+        super().__init__(tipas)
+        self.kids=[]             # vidine struktura
+        # butinas atidarantis reiskinys
         self.opening=Opening('PRADZIA','PRADZIA','PRADZIA')
-        self.closing=Closing('PRADZIA','PRADZIA','PRADZIA')
+        self.closing=Closing('PABAIGA','PABAIGA','PABAIGA')
         self.address=[]
     def show_self(self):
         print('  '*len(self.address),end='')
         self.opening.show_self()
         print('  '*len(self.address),end='')
-        print('[stack:'+str([i['opening'] for i in self.stack])+']')
-        for i in self.kids:
-            i.show_self()
+        print('<<stack:'+str([i['opening'] for i in self.stack])+'>>')
+        self.body.show_self()
         print('  '*len(self.address),end='')
         self.closing.show_self()
 
+        
+class BlockOpening:
+    def __init__(self,tipas):
+            self.Type=tipas
+            self.representation=''
+            self.body=None
+            self.father=None
+    def show_self(self):
+        print('#----------------------['+self.Type+':'+self.representation+']'\
+              '<<father_adress:'+str(self.father.address)+'>>')        
+        
 class Block(ParseObject):
     def __init__(self,tipas):
         super().__init__(tipas)
-        self.kids=[]            
         self.address=[]
-        self.opening_representation=''
         self.body=None
+        self.opening=None
     def show_self(self):
         print('  '*len(self.address),end='')
-        print('*'*20)
-        print(self.body.show_self())
-        print("[Pilnas blokas:",repr(self.fulltext))
-        print("Pabaiga:",self.pabaiga)
-        print('  '*len(self.address),end='')
-        print('*'*20)
+        self.opening.show_self()
+        self.body.show_self()
+
 
 class SimpleStructure(ParseObject):
     def __init__(self,tipas):
@@ -161,7 +183,7 @@ class SimpleStructure(ParseObject):
         self.address=[]
     def show_self(self):
         print('  '*len(self.address),end='') 
-        print('['+self.Type+':'+repr(self.fulltext)+']')
+        print('['+self.Type+':'+repr(self.fulltext)+']<<address:'+str(self.address)+'>>')
         
 class Command(ParseObject):
     '''Komanda su argumentais.
@@ -175,7 +197,7 @@ class Command(ParseObject):
         self.args=[]
     def show_self(self):
         print('  '*len(self.address),end='') 
-        print(self.name,'<--Komanda:',self.Type)
+        print('[komanda:'+self.name+']<<tipas:'+self.Type+'>><<address:'+str(self.address)+'>>')
         for i,arg in enumerate(self.args):
             print('  '*len(self.address),end='') 
             print('♣'+'-'*10,str(i+1)+'-as argumentas')
@@ -425,6 +447,30 @@ def skip_till_argument(poz,String,syntax='T'):
                 "Parsinamas tekstas baigiasi "\
                 "komanda, kuri turi tureti argumenta:"\
                 "\n{}".format(context(i,String)),i)
+    return i-poz
+
+def skip_till_char(poz,String,syntax='T'):
+    '''Praleidzia visus, nereiksmingus
+    charus iki sekancio argumento.
+    Tarp komandos ir argumento galimi tik 
+    iprastiniai komentarai % ir whitespacai.
+    Taip pat, dar neprasidejus komentarui  
+    yra galimas 1-as newline.'''
+    BEGIN_OF_ARG=latexsyntax.SYNTAX[syntax]['arg_beg']
+    i=poz
+    if String[poz] in BEGIN_OF_ARG:
+        return 0
+    if String[i] in latexsyntax.WHITESPACE:
+        i+=skip_whitespace(i,String)
+    # po komandos su whitespace galimas tik vienas newline 
+    if String[i]=='\n':
+        i+=1
+    while True:
+        if is_start_of_comment(i,String,syntax):
+            i+=skip_icomment(i,String,syntax)
+        elif String[i] in latexsyntax.WHITESPACE:
+            i+=skip_whitespace(i,String)
+        else: break
     return i-poz
 
 def is_start_of_env(poz,String,syntax='T'):
@@ -693,7 +739,7 @@ def collect_argument(poz,String,syntax,address,new_stack):
     braces=latexsyntax.SYNTAX[syntax]['mbraces']
     if String[poz] in braces.keys():
         print("Sis argumentas turi vidine struktura")
-        Object, lenght=parse_wraped(poz,String,syntax,String[poz],1,
+        Object, lenght, inner_message=ParseGroup(poz,String,syntax,String[poz],1,
                                     address,new_stack)
         Object.Type='arg_complex'
         return Object, lenght
@@ -823,7 +869,7 @@ def collect_command(poz,String,syntax,address,new_stack):
     # susirenkam zvaigzdute
     # ji atsiskiria nuo komandos kaip ir argumentas
     if Komandos_pav[-1:]!='*':
-        ilg=skip_till_argument(i,String)
+        ilg=skip_till_char(i,String)
         if String[i+ilg]=='*':
             Komandos_pav=Komandos_pav+'*'
             i+=ilg+1
@@ -870,7 +916,7 @@ def collect_command(poz,String,syntax,address,new_stack):
             else:
                 print("Pradedamas surinkineti opcionalus argumentas")
                 odelims=latexsyntax.SYNTAX[syntax]['odelims']
-                ilg=skip_till_argument(i,String)
+                ilg=skip_till_char(i,String)
                 if String[i+ilg] in odelims.keys():
                     print("Rastas opcionalus argumentas")
                     print("opcionalus:",context(i,String))
@@ -1136,7 +1182,7 @@ def do_the_right_thing(poz,String,syntax,Father,address,elem,
             # PERDUODAMAS ISORINIO REISKINIO ADRESAS, 
             # ATIDARANCIO SKIRTUKO ILGIS
             # VIDINIO REISKINIO NUMATOMA SINTAKSE
-            Object, lenght, inner_message=parse_wraped(poz,String,inner_syntax,delim,
+            Object, lenght, inner_message=ParseGroup(poz,String,inner_syntax,delim,
                                         len(delim),new_address,new_stack)
             Object.property=Property
             Father.kids.append(Object)
@@ -1156,7 +1202,7 @@ def do_the_right_thing(poz,String,syntax,Father,address,elem,
                   [switch]['content']
                 if inner_syntax == 'O':
                     inner_syntax=syntax
-                Object, lenght, inner_message=parse_wraped(poz,String,inner_syntax,switch,
+                Object, lenght, inner_message=ParseGroup(poz,String,inner_syntax,switch,
                                     len(switch),new_address,new_stack)
                 Object.property=Property                
                 Father.kids.append(Object)
@@ -1172,7 +1218,7 @@ def do_the_right_thing(poz,String,syntax,Father,address,elem,
                   [env_name]['content']
                 if inner_syntax == 'O':
                     inner_syntax=syntax
-                Object, lenght, inner_message=parse_wraped(poz,String,inner_syntax,env_name,
+                Object, lenght, inner_message=ParseGroup(poz,String,inner_syntax,env_name,
                                     lenght,new_address,new_stack)
                 Object.opening.formated='\\begin{'+env_name+'}'
                 Object.closing.formated='\\end{'+env_name+'}'
@@ -1205,7 +1251,6 @@ def do_the_right_thing(poz,String,syntax,Father,address,elem,
                                                                  Object, lenght)
                         if inner_message:
                             print("Znute gauta is bloko parsinimo:",inner_message)
-                        Object.pabaiga=inner_message
                         Father.kids.append(Object)
                         return lenght, inner_message
                     
@@ -1264,7 +1309,7 @@ def do_the_right_thing(poz,String,syntax,Father,address,elem,
         print("SUKURTAS TEKSTO OBJEKTAS:",'>>'+Object.fulltext+'<<')
         return Object.lenght, None
 
-def parse_wraped(poz,String,syntax,opening,len,address,new_stack):
+def ParseGroup(poz,String,syntax,opening,len,address,new_stack):
     '''Metodas suparsinantis isskirta reiskini.
     Jam inicializuoti perduodamas atidarantis reiskinys
     Grazinamas objektas su visa vidine struktursada ir jo ilgis!'''
@@ -1286,20 +1331,25 @@ def parse_wraped(poz,String,syntax,opening,len,address,new_stack):
                                                    syntax,Tikrinimo_mechanizmas,
                                                    address,new_stack)
     k=lenght
+    Objektas.fulltext=String[poz+len:poz+len+lenght]
     print("\nVidinio reiskinio ilgis:",lenght)
     print("Vidinis_reiskinys:",'>>'+String[poz+len:poz+len+lenght]+'<<')
     print("Uzdarantis reiskinys:",String[poz+len+lenght:poz+len+lenght+closing_len])
     print("Viso reiskinio ilgis:",len+lenght+closing_len)
     # print("apgaubtas_baigesi:",String[poz+k+closing_len:])
     Uzdarantis_skirtukas=Closing(skirtuko_tipas,opening,String[poz+len+k:poz+len+k+closing_len])
-    Objektas.lenght=len+k+closing_len
-    Objektas.address=address
-    Objektas.body=String[poz+len:poz+len+k]
-    Objektas.opening=Atidarantis_skirtukas
-    Objektas.closing=Uzdarantis_skirtukas
+    Grupes_objektas=Group('group')
+    Grupes_objektas.lenght=len+k+closing_len
+    Grupes_objektas.address=address
+    Grupes_objektas.body=Objektas
+    Atidarantis_skirtukas.father=Grupes_objektas
+    Uzdarantis_skirtukas.father=Grupes_objektas
+    Grupes_objektas.opening=Atidarantis_skirtukas
+    Grupes_objektas.closing=Uzdarantis_skirtukas
+    Grupes_objektas.fulltext=String[poz:poz+len+lenght+closing_len]
+    Grupes_objektas.stack=new_stack
     # objekta, jo_ilgis, zinute
-    return Objektas, Objektas.lenght, None 
-
+    return Grupes_objektas, Grupes_objektas.lenght, None 
 
 def ParseBlock(poz,String,syntax,address,new_stack,
                start_of_block,lenght_of_start):
@@ -1307,10 +1357,21 @@ def ParseBlock(poz,String,syntax,address,new_stack,
     kuris grazina 0 jei randa, tokios pat tipo elementa (komanda)'''
     print("Pradedamas_parsinti_blokas:")
     print(context(poz+lenght_of_start,String))
+    # Suformuojamas bloka atidarantis objektas
     if type(start_of_block)==Command:
         print("Si bloka atidarantis reiskinys yra komanda")
         start_representation=start_of_block.name
-    else: start_representation=start_of_block
+        Block_Opening=BlockOpening('command')
+        Block_Opening.representation=start_representation
+        Block_Opening.body=start_of_block
+        Block_Opening.lenght=lenght_of_start
+    else: 
+        start_representation=start_of_block
+        element=SimpleStructure('delimeter')
+        element.fulltext=start_of_block
+        Block_Opening.representation=start_representation
+        Block_Opening.body=element
+        Block_Opening.lenght=lenght_of_start
     print("Bloko parsinima iniciaves reiskinys",start_representation)     
     print(context(poz,String))
     print("Atidarantis_reiskinys:",start_of_block)
@@ -1333,8 +1394,8 @@ def ParseBlock(poz,String,syntax,address,new_stack,
     Blokas=Block('block')
     Blokas.body=InnerObject
     Blokas.fulltext=String[poz:poz+lenght_of_start+lenght]
-    Blokas.opening=start_of_block
-    Blokas.opening_representation=start_representation
+    Block_Opening.father=Blokas
+    Blokas.opening=Block_Opening
     Blokas.lenght=lenght_of_start+lenght
     Blokas.address=address
     Blokas.pabaiga=context(poz+Blokas.lenght,String)
@@ -1372,7 +1433,7 @@ def ParseBlock(poz,String,syntax,address,new_stack,
 #     {verbatim}   bbb \\end {verbatim}  aaaa  \\end{equation}   
 #      '''
 
-testas='''
+test='''
 \\documentclass[12pt]{article}
 
 \\begin{document}
@@ -1396,6 +1457,7 @@ TeX'iniai skliaustai yra ypatingos svarbos
 Butinos parsinimo salygos:
 \\begin{itemize}
 \\item visi \TeX{}'iniai skliaustai turi buti suporuoti
+\\item $matematika \\frac{giliau}{aha} $
 \\end{itemize}
 
 tebunie taip \\mbox{vidinis argumentas}  $ pirmoji matematika $  
@@ -1412,7 +1474,7 @@ teksto pabaiga
 \\end{document}
 '''
 
-test='''\\begin{itemize} \\item pirmas itemas \\item antras itemas  \\end{itemize}
+testas='''\\begin{itemize} \\item pirmas itemas \\item antras itemas  \\end{itemize}
 tolimesnis tekstas 
 '''
 
@@ -1424,7 +1486,7 @@ objektas.show_self()
 
 def prasuk_objekta(objektas):
     for i in objektas.kids:
-        if type(i)==FruitfullObject:
+        if type(i)==Grouop:
             print('   '*len(i.address), i.opening.body)
             prasuk_objekta(i)
             print('   '*len(i.address), i.closing.body)
