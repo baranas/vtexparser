@@ -149,31 +149,6 @@ class Group(ParseObject):
         print('  '*len(self.address),end='')
         self.closing.show_self()
 
-        
-class BlockOpening:
-    def __init__(self,tipas):
-            self.Type=tipas
-            self.representation=''
-            self.body=None
-            self.father=None
-    def show_self(self):
-        print('#----------------------['+self.Type+':'+self.representation+']'\
-              '<<father_adress:'+str(self.father.address)+'>>')        
-        
-class Block(ParseObject):
-    def __init__(self,tipas):
-        super().__init__(tipas)
-        self.address=[]
-        self.body=None
-        self.opening=None
-    def show_self(self):
-        print('  '*len(self.address),end='')
-        self.opening.show_self()
-        print('  '*len(self.address),end='')
-        print('<<stack:'+str([i['opening'] for i in self.body.stack])+'>>')
-        self.body.show_self()
-
-
 class SimpleStructure(ParseObject):
     def __init__(self,tipas):
         super().__init__(tipas)
@@ -203,8 +178,32 @@ class Command(ParseObject):
             print('  '*len(self.address),end='') 
             print('♣'+'-'*20)
 
-    
+
+
             
+class BlockOpening:
+    def __init__(self,tipas):
+            self.Type=tipas
+            self.representation=''
+            self.body=None
+            self.father=None
+    def show_self(self):
+        print('#----------------------['+self.Type+':'+self.representation+']'\
+              '<<father_adress:'+str(self.father.address)+'>>')        
+        
+class Block(ParseObject):
+    def __init__(self,tipas):
+        super().__init__(tipas)
+        self.address=[]
+        self.body=None
+        self.opening=None
+    def show_self(self):
+        print('  '*len(self.address),end='')
+        self.opening.show_self()
+        print('  '*len(self.address),end='')
+        print('<<stack:'+str([i['opening'] for i in self.body.stack])+'>>')
+        self.body.show_self()
+
               ######################################## 
               ####   IPRASTI METODAI NAUDOJAMI    ####
               ##         PARSINIMO PROCESE          ##
@@ -780,73 +779,6 @@ def collect_optional_argument(poz,String,syntax):
     Opcionalus_argumentas.fulltext=String[poz:i]
     return Opcionalus_argumentas, i-poz
         
-oarg, ilg=collect_optional_argument(1,' [aaaa[aaaaaa]aaaaa]   ','T')
-    
-    
-    
-def skip_braced(poz,String,
-                meta=True,
-                verb=False,
-                COMMENT_SYNTAX=latexsyntax.COMMENT,
-                METACHARACTERS=latexsyntax.METACHARACTERS):
-        '''Grazina apskliausto reiskinio ilgi.
-        Jei meta=True, tai renka tik aktyvius skliaustus,
-        jei ne tai ieskos esamo skliausto poros.
-
-        Jei verb==True, tai is sintakses bus trumpam ismesti 
-        komentaro charai ir tarp skliaustu esancius % traktuos 
-        kaip simbolius.'''
-        if len(COMMENT_SYNTAX)!=1:
-            raise AlgError(
-                "Komentaro sintakses apibrezime yra daugiau"\
-                "negu vienas simbolis:\n"\
-                "{}\n{}".format(COMMENT_SYNTAX,context(i,String)),i)           
-        COMMENT_SYNTAX=latexsyntax.COMMENT
-        if meta:
-            DELIMETERS=latexsyntax.ARG_DELIMS
-        else:
-            DELIMETERS=latexsyntax.BRACES
-        # jei apskliaustas reiskinys yra
-        # verbatimine aplinka, ir procento zenklas nereiskia 
-        # komentaro pradzios
-        if verb:
-            del COMMENT_SYNTAX['%']
-        i=poz
-        char=String[poz]
-        if (char in latexsyntax.DELIMETERS.keys()) and metachar(poz,String):
-            left=String[poz]
-            right=latexsyntax.ARG_DELIMS[left]
-        else:
-            raise AlgError("Tai nera argumento skirtukas:"\
-                           "\n{}".format(context(i,String)),i)
-        if EOS(i,String):
-            raise EOSError(
-                "Tekstas baigiasi, ten kur "\
-                "turetu buti skliaudziamas argumentas!".format(
-                    context(i,String)),i)
-        i+=1
-        braces=[1,0]
-        while not braces[0]==braces[1]:
-            if String[i] in COMMENT_SYNTAX.keys() and metachar(i,String):
-                try:
-                    i+=skip_comment(i,String)
-                except EOSError:
-                    raise MatchError(
-                        'Nerasta skliausto pora!:\n{}'.format(
-                            context(poz,String)),poz)
-            if (String[i] in (left+right)) and metachar(i,String):
-                if String[i]==left: 
-                    braces[0]+=1
-                elif String[i]==right:
-                    braces[1]+=1
-            if braces[0]==braces[1]: break
-            if  EOS(i,String):
-                raise MatchError(
-                    'Nerasta skliausto pora!:\n{}'.format(
-                        context(poz,String)),poz)
-            i+=1
-        return i-poz+1
-                  
 def collect_command(poz,String,syntax,address,new_stack):
     '''Surenka komanda, su jos argumentais, jei komandos
     argumentas yra verb tipo tai netikriname, komentaru buvimo
@@ -862,8 +794,8 @@ def collect_command(poz,String,syntax,address,new_stack):
     Type=commands[Komandos_pav]['type']
     i+=ilg
     print("KOMANDA:",Komandos_pav)
-    print("ESAMA_POZICIJA:", context(i,String))
-    print("Sios komandos adresas",address)
+    print("ESAMA_POZICIJA:", repr(String[i:]))
+    print("Sios komandai priskirtas adresas",address)
     # susirenkam zvaigzdute
     # ji atsiskiria nuo komandos kaip ir argumentas
     if Komandos_pav[-1:]!='*':
@@ -1009,34 +941,35 @@ def Parse(String, syntax='T', checking=None, address=[],stack=[],
     ParseObject.stack=stack
     print("GILIOS_STRUKTUROS_PARSINIMAS:",address)
     print('STRUKTUROS_VIDINE_SYNTAKSE:',syntax)
-    print(repr(String[poz:])
+    print(repr(String))
     # Priskiriamas esamos strukturos uzbaigimo tikrinimo mechanizmas
     if checking:
         checkas=checking
     else:
         checkas=lambda x,y: False
-    # JEI YRA ISORINIU ZINUCIU
-    checkings=[]
-    checkings_repr=[]                     # logui
-    new_message={}
-    # suformuojama tuscia zinute
-    # kuri bus perduodama isorinems strukturoms
-    if outer_message:
-        print("Gauta isorine zinute",outer_message)
-        # jei parsinamas elementas yra bloko strukturos
-        if 'block' in outer_message.keys():
-            print("Esamas elementas yra bloko strukturos")
-            print("Esamas strukturu stackas:",[i['opening'] for i in stack])
-            for nr,obj in enumerate(reversed(stack)):
-                if nr==0: continue
-                if obj['object_type']=='block':
-                    checkings.append(obj['function'])
-                    checkings_repr.append(obj['opening'])
-                elif obj['object_type']=='group':
-                    checkings.append(obj['function'])
-                    checkings_repr.append(obj['opening'])
-                    break
-    ############################## 
+    Property=None
+    # # JEI YRA ISORINIU ZINUCIU
+    # checkings=[]
+    # checkings_repr=[]                     # logui
+    # new_message={}
+    # # suformuojama tuscia zinute
+    # # kuri bus perduodama isorinems strukturoms
+    # if outer_message:
+    #     print("Gauta isorine zinute",outer_message)
+    #     # jei parsinamas elementas yra bloko strukturos
+    #     if 'block' in outer_message.keys():
+    #         print("Esamas elementas yra bloko strukturos")
+    #         print("Esamas strukturu stackas:",[i['opening'] for i in stack])
+    #         for nr,obj in enumerate(reversed(stack)):
+    #             if nr==0: continue
+    #             if obj['object_type']=='block':
+    #                 checkings.append(obj['function'])
+    #                 checkings_repr.append(obj['opening'])
+    #             elif obj['object_type']=='group':
+    #                 checkings.append(obj['function'])
+    #                 checkings_repr.append(obj['opening'])
+    #                 break
+    # ############################## 
     # Stackai
     # sukuriama isorinio elemento stacko kopija
     my_stack=list(stack)
@@ -1062,52 +995,52 @@ def Parse(String, syntax='T', checking=None, address=[],stack=[],
                 # ji uzdarancio reiskinio ilgis
                 # zinute isoriniui procesui
                 return ParseObject, i, checkas(i,String), None
-            ############################## 
-            # JEI PARSINAMA BLOKINE STRUKTURA
-            # ir reikes tikrinti visa stacka 
-            # uzbaigiamuju reiskiniu
-            elif checkings:
-                print("Tikrinama uzdaranciu reiskiniu seka")
-                print("Steko reprezentacija:",checkings_repr)
-                for nr, check in enumerate(checkings):
-                    print(nr,'as stacko tikrinimas')
-                    if check(i,String):
-                        print("Esama struktura uzsibaige kartu su"\
-                              "{}-a isorine struktura".format(nr))
-                        # Siunciama zinute i isore
-                        # [nr,closing_len]
-                        # nr - uzdarytu blokiniu strukturu skaicius
-                        # closing_len - isorinio uzdarancio reiskinio ilgis
-                        new_message.update({"end":[nr,check(i,String)]})
-                        print("Suformuota zinute isoriniems procesams:",
-                              new_message)
-                        return ParseObject,i,check(i,String), new_message
-                print("Blokas neuzsibaige")
-            ##############################  
-
-            print("Kuriami vidiniai objektai")
-            new_address=address+[elem]
-            k, inner_message=CreateInnerObject(i,String,syntax,ParseObject,
-                                                new_address,checking,stack,Property)
-            # Jei parsinamas elementas turi savybiu veikianciu grupes 
-            # likusius elementus
-            elem+=1
-            i+=k
-            if inner_message:
-                print("Is vidinio elemento gauta zinute",inner_message)
-                if 'group_property' in inner_message.keys():
-                    print("Ka tik buves elementas visiems sekantiems"\
-                          "elementams priskirs tam tikra savybe")
-                    Property.update(inner_message['group_property'])
-                if 'end' in inner_message.keys():
-                    print("\n\nGAUTA_ZINUTE_NUTRAUKTI_PARSINIMA:")
-                    print(inner_message)
-                    if inner_message['end'][0]==0:
-                        print("Nutraukiamas isorinio reiskinio parsinimas")
-                        print(context(i,String))
-                        print("Isorini bloka uzdarantis reiskinys:")
-                        print('['+String[i:i+inner_message['end'][1]]+']')
-                        return ParseObject, i, inner_message['end'][1], None
+            # ############################## 
+            # # JEI PARSINAMA BLOKINE STRUKTURA
+            # # ir reikes tikrinti visa stacka 
+            # # uzbaigiamuju reiskiniu
+            # elif checkings:
+            #     print("Tikrinama uzdaranciu reiskiniu seka")
+            #     print("Steko reprezentacija:",checkings_repr)
+            #     for nr, check in enumerate(checkings):
+            #         print(nr,'as stacko tikrinimas')
+            #         if check(i,String):
+            #             print("Esama struktura uzsibaige kartu su"\
+            #                   "{}-a isorine struktura".format(nr))
+            #             # Siunciama zinute i isore
+            #             # [nr,closing_len]
+            #             # nr - uzdarytu blokiniu strukturu skaicius
+            #             # closing_len - isorinio uzdarancio reiskinio ilgis
+            #             new_message.update({"end":[nr,check(i,String)]})
+            #             print("Suformuota zinute isoriniems procesams:",
+            #                   new_message)
+            #             return ParseObject,i,check(i,String), new_message
+            #     print("Blokas neuzsibaige")
+            # ##############################  
+            else:
+                print("Kuriami vidiniai objektai")
+                new_address=address+[elem]
+                k, inner_message=CreateInnerObject(i,String,syntax,ParseObject,
+                                                   new_address,checking,stack,Property)
+                # Jei parsinamas elementas turi savybiu veikianciu grupes 
+                # likusius elementus
+                elem+=1
+                i+=k
+                if inner_message:
+                    print("Is vidinio elemento gauta zinute",inner_message)
+                    if 'group_property' in inner_message.keys():
+                        print("Ka tik buves elementas visiems sekantiems"\
+                              "elementams priskirs tam tikra savybe")
+                        Property.update(inner_message['group_property'])
+                    if 'end' in inner_message.keys():
+                        print("\n\nGAUTA_ZINUTE_NUTRAUKTI_PARSINIMA:")
+                        print(inner_message)
+                        if inner_message['end'][0]==0:
+                            print("Nutraukiamas isorinio reiskinio parsinimas")
+                            print(context(i,String))
+                            print("Isorini bloka uzdarantis reiskinys:")
+                            print('['+String[i:i+inner_message['end'][1]]+']')
+                            return ParseObject, i, inner_message['end'][1], None
                     elif inner_message['end'][0]>0:
                         print("Susikaupes ilgesnis isoriniu strukturu skaicius")
                         print("Esama struktura yra bloko tipo")
@@ -1132,7 +1065,6 @@ def CreateInnerObject(poz,String,syntax,Father,new_address,
         print("Numatyta savybe", Property)
     # sukuriamas tuscias stack elementas
     # kuriame bus saugojami tikrinimo mechanizmai
-
     print("Sukurtas naujas adresas",new_address)
     METACHARS=latexsyntax.SYNTAX[syntax]['metach']
     # jei esamas symbolis yra metacharas esamoje syntakseje
@@ -1228,17 +1160,17 @@ def CreateInnerObject(poz,String,syntax,Father,new_address,
                     Object,lenght, inner_message=collect_command(poz,String,syntax,
                                                   new_address,new_stack)
                     print('\n\n\nSURINKTA_KOMANDA:',str([i['opening'] for i in new_stack]))
-                    ############################## 
-                    # BLOKAI
-                    # jei esama komanda yra bloko pradzia
-                    if 'start_of_block' in inner_message.keys():
-                        Object, lenght, inner_message=ParseBlock(poz,String,syntax,
-                                                                 new_address,new_stack, 
-                                                                 Object, lenght)
-                        if inner_message:
-                            print("Znute gauta is bloko parsinimo:",inner_message)
-                        Father.kids.append(Object)
-                        return lenght, inner_message
+                    # ############################## 
+                    # # BLOKAI
+                    # # jei esama komanda yra bloko pradzia
+                    # if 'start_of_block' in inner_message.keys():
+                    #     Object, lenght, inner_message=ParseBlock(poz,String,syntax,
+                    #                                              new_address,new_stack, 
+                    #                                              Object, lenght)
+                    #     if inner_message:
+                    #         print("Znute gauta is bloko parsinimo:",inner_message)
+                    #     Father.kids.append(Object)
+                    #     return lenght, inner_message
                     
                     Father.kids.append(Object)
                     return lenght, inner_message
@@ -1337,57 +1269,57 @@ def ParseGroup(poz,String,syntax,opening,len,address,new_stack):
     # objekta, jo_ilgis, zinute
     return Grupes_objektas, Grupes_objektas.lenght, None 
 
-def ParseBlock(poz,String,syntax,address,new_stack,
-               start_of_block,lenght_of_start):
-    '''Parsinamas bloko tipo elemetas. Sukuriamas tikrinimo mechanizmas
-    kuris grazina 0 jei randa, tokios pat tipo elementa (komanda)'''
-    print("Pradedamas_parsinti_blokas:")
-    print(context(poz+lenght_of_start,String))
-    # Suformuojamas bloka atidarantis objektas
-    if type(start_of_block)==Command:
-        print("Si bloka atidarantis reiskinys yra komanda")
-        start_representation=start_of_block.name
-        Block_Opening=BlockOpening('command')
-        Block_Opening.representation=start_representation
-        Block_Opening.body=start_of_block
-        Block_Opening.lenght=lenght_of_start
-    else: 
-        start_representation=start_of_block
-        element=SimpleStructure('delimeter')
-        element.fulltext=start_of_block
-        Block_Opening.representation=start_representation
-        Block_Opening.body=element
-        Block_Opening.lenght=lenght_of_start
-    print("Bloko parsinima iniciaves reiskinys",start_representation)     
-    print(context(poz,String))
-    print("Atidarantis_reiskinys:",start_of_block)
-    print("Bloko pradzia:\n{}".format(context(poz+lenght_of_start,String)))
-    ending_check=lambda poz, String: check_end_of_block(poz,String,syntax,start_of_block)
-    new_stack.append({
-            'function':ending_check,
-            'type':'just block',
-            'object_type':'block',
-            'opening':start_representation,
-            'poz':poz})    
-    InnerObject,lenght,closing, inner_message = Parse(String[poz+lenght_of_start:], 
-                                                      syntax, ending_check, address, new_stack,
-                                                      {'block':start_representation})
-    InnerObject.address=address
-    print("Baigta parsinti vidine bloko struktura")
-    print("Blokas uzsibaige:\n{}".format(context(poz+lenght_of_start+lenght,String)))
-    print("Uzbaigian bloka gauta zinute:",inner_message)
-    print("Sukuriamas bloko elementas")
-    Blokas=Block('block')
-    Blokas.body=InnerObject
-    Blokas.fulltext=String[poz:poz+lenght_of_start+lenght]
-    Block_Opening.father=Blokas
-    Blokas.opening=Block_Opening
-    Blokas.lenght=lenght_of_start+lenght
-    Blokas.address=address
-    Blokas.pabaiga=context(poz+Blokas.lenght,String)
-    print("Baigtas parsinti blokas ir griztama i isorini procesa")
-    print("Taip pat issiunciama zinute isorinei funkcijai")
-    return Blokas, Blokas.lenght, inner_message 
+# def ParseBlock(poz,String,syntax,address,new_stack,
+#                start_of_block,lenght_of_start):
+#     '''Parsinamas bloko tipo elemetas. Sukuriamas tikrinimo mechanizmas
+#     kuris grazina 0 jei randa, tokios pat tipo elementa (komanda)'''
+#     print("Pradedamas_parsinti_blokas:")
+#     print(context(poz+lenght_of_start,String))
+#     # Suformuojamas bloka atidarantis objektas
+#     if type(start_of_block)==Command:
+#         print("Si bloka atidarantis reiskinys yra komanda")
+#         start_representation=start_of_block.name
+#         Block_Opening=BlockOpening('command')
+#         Block_Opening.representation=start_representation
+#         Block_Opening.body=start_of_block
+#         Block_Opening.lenght=lenght_of_start
+#     else: 
+#         start_representation=start_of_block
+#         element=SimpleStructure('delimeter')
+#         element.fulltext=start_of_block
+#         Block_Opening.representation=start_representation
+#         Block_Opening.body=element
+#         Block_Opening.lenght=lenght_of_start
+#     print("Bloko parsinima iniciaves reiskinys",start_representation)     
+#     print(context(poz,String))
+#     print("Atidarantis_reiskinys:",start_of_block)
+#     print("Bloko pradzia:\n{}".format(context(poz+lenght_of_start,String)))
+#     ending_check=lambda poz, String: check_end_of_block(poz,String,syntax,start_of_block)
+#     new_stack.append({
+#             'function':ending_check,
+#             'type':'just block',
+#             'object_type':'block',
+#             'opening':start_representation,
+#             'poz':poz})    
+#     InnerObject,lenght,closing, inner_message = Parse(String[poz+lenght_of_start:], 
+#                                                       syntax, ending_check, address, new_stack,
+#                                                       {'block':start_representation})
+#     InnerObject.address=address
+#     print("Baigta parsinti vidine bloko struktura")
+#     print("Blokas uzsibaige:\n{}".format(context(poz+lenght_of_start+lenght,String)))
+#     print("Uzbaigian bloka gauta zinute:",inner_message)
+#     print("Sukuriamas bloko elementas")
+#     Blokas=Block('block')
+#     Blokas.body=InnerObject
+#     Blokas.fulltext=String[poz:poz+lenght_of_start+lenght]
+#     Block_Opening.father=Blokas
+#     Blokas.opening=Block_Opening
+#     Blokas.lenght=lenght_of_start+lenght
+#     Blokas.address=address
+#     Blokas.pabaiga=context(poz+Blokas.lenght,String)
+#     print("Baigtas parsinti blokas ir griztama i isorini procesa")
+#     print("Taip pat issiunciama zinute isorinei funkcijai")
+#     return Blokas, Blokas.lenght, inner_message 
     
     
     
