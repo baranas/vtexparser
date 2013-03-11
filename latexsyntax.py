@@ -164,39 +164,48 @@ T_COMMANDS={
               },
           '\\part':{
               'pattern':(0,'T'),
-              'type':'section'
+              'type':'start_of_block',
+              'block_type':'section'
               },
           '\\chapter':{
               'pattern':(0,'T'),
-              'type':'section'
+              'type':'start_of_block',
+              'block_type':'section'
               },
           '\\section':{
               'pattern':(0,'T'),
-              'type':'section'
+              'type':'start_of_block',
+              'block_type':'section'
               },                  
           '\\subsection':{
               'pattern':(0,'T'),
-              'type':'section'
+              'type':'start_of_block',
+              'block_type':'section'
               },
           '\\subsubsection':{
               'pattern':(0,'T'),
-              'type':'section'
+              'type':'start_of_block',
+              'block_type':'section'
               },
           '\\paragraph':{
               'pattern':(0,'T'),
-              'type':'section'
+              'type':'start_of_block',
+              'block_type':'section'
               },
           '\\subparagraph':{
               'pattern':(0,'T'),
-              'type':'section'
+              'type':'start_of_block',
+              'block_type':'section'
               },
           '\\subsubparagraph':{
               'pattern':(0,'T'),
-              'type':'section'
+              'type':'start_of_block',
+              'block_type':'section'
               },
           '\\subsubsubparagraph':{
               'pattern':(0,'T'),
-              'type':'section'
+              'type':'start_of_block',
+              'block_type':'section'
               },
           '\\mbox':{
               'pattern':('T',),
