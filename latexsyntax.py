@@ -129,6 +129,7 @@ COMMAND_CHARS.update('*')
 # * JEI KOMANDA YRA SYMBOLIS TAI PATERNAAS YRA NONE
 
 # TEKSTINES MODOS KOMANDOS
+
 T_COMMANDS={
           '\\usepackage':{
               'pattern':(0,1),
@@ -164,48 +165,39 @@ T_COMMANDS={
               },
           '\\part':{
               'pattern':(0,'T'),
-              'type':'start_of_block',
-              'block_type':'section'
+              'type':'section'
               },
           '\\chapter':{
               'pattern':(0,'T'),
-              'type':'start_of_block',
-              'block_type':'section'
+              'type':'section'
               },
           '\\section':{
               'pattern':(0,'T'),
-              'type':'start_of_block',
-              'block_type':'section'
-              },                  
+              'type':'section'
+              },
           '\\subsection':{
               'pattern':(0,'T'),
-              'type':'start_of_block',
-              'block_type':'section'
+              'type':'section'
               },
           '\\subsubsection':{
               'pattern':(0,'T'),
-              'type':'start_of_block',
-              'block_type':'section'
+              'type':'section'
               },
           '\\paragraph':{
               'pattern':(0,'T'),
-              'type':'start_of_block',
-              'block_type':'section'
+              'type':'section'
               },
           '\\subparagraph':{
               'pattern':(0,'T'),
-              'type':'start_of_block',
-              'block_type':'section'
+              'type':'section'
               },
           '\\subsubparagraph':{
               'pattern':(0,'T'),
-              'type':'start_of_block',
-              'block_type':'section'
+              'type':'section'
               },
           '\\subsubsubparagraph':{
               'pattern':(0,'T'),
-              'type':'start_of_block',
-              'block_type':'section'
+              'type':'section'
               },
           '\\mbox':{
               'pattern':('T',),
@@ -224,13 +216,21 @@ T_COMMANDS={
               'type':'math_fraction'
               },
         '\\it':{
-              'pattern':None,
-              'type':'group_switch',
-              'group_switch_type':'font'},
+            'pattern':None,
+            'type':'property'
+            },
+        '\\bf':{
+            'pattern':None,
+            'type':'property'
+            },
+        '\\scriptize':{
+            'pattern':None,
+            'type':'property'
+            },
         '\\item':{
-              'pattern':(0),
-              'type':'start_of_block',
-              'block_type':'itemize'}}
+            'pattern':None,
+            'type':'block'}}
+
 
 # MATEMATINES MODOS KOMANDOS 
 M_COMMANDS={'\\frac':{
